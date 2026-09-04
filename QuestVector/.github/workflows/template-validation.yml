@@ -1,0 +1,73 @@
+name: "QuestVector Template Validation"
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'templates/**.yaml'
+      - 'templates/**.yml'
+
+jobs:
+  validate-templates:
+    name: "Validate Community Mission Templates"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout PR Branch
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Node/CLI Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🔧 Install QuestVector CLI
+        run: npm ci || npm install -g .
+
+      - name: 🔍 Find Changed YAML Templates
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            templates/**/*.yaml
+            templates/**/*.yml
+
+      - name: 🧪 Run qv template validate
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Starting validation on changed template files..."
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "--------------------------------------------------"
+            echo "Checking: $file"
+            qv template validate "$file" --json || EXIT_CODE=$?
+            if [ -n "$EXIT_CODE" ] && [ "$EXIT_CODE" -ne 0 ]; then
+              echo "❌ Validation failed for $file"
+              echo "💡 Run 'qv template validate $file --fix' locally to auto-repair errors."
+              exit 1
+            fi
+          done
+          echo "✅ All templates passed validation successfully!"
+
+      - name: 💬 Post Flight Deck Control Feedback on PR
+        uses: actions/github-script@v7
+        if: always() && github.event_name == 'pull_request'
+        with:
+          script: |
+            const issue_number = context.payload.pull_request.number;
+            const commentBody = `### 🛰️ Flight Deck Control: Mission Loadout Scan
+            
+            **STATUS:** \`TEMPLATE SCAN COMPLETE\`
+            
+            > ⚠️ **Flight Engineer Note:** All submitted \`.qv-mission.yaml\` files have been scanned for schema alignment, narrative weight balance, and 2026 keyword density.
+            
+            * Run \`qv template validate <path> --fix\` locally to automatically resolve layout errors or mathematical weight imbalances.
+            * Consult the **Actions Log Tab** for detailed telemetry output.
+            
+            *Flight Control out. Maintain trajectory!* 🚀`;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              body: commentBody
+            });

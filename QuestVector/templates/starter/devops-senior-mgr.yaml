@@ -1,0 +1,25 @@
+schema_version: "1.0"
+mission_id: "devops-senior-mgr"
+metadata:
+  title: "DevOps & Platform Operations Manager"
+  author: "QuestVector Starter Pack"
+  version: "1.0.0"
+  description: "Starter mission template tailored for DevOps & Platform Operations Manager roles."
+  tags: ["starter-pack", "it-leadership"]
+
+jd_analysis_rules:
+  priority_keywords:
+    - "Core Technical Competency 1"
+    - "Core Technical Competency 2"
+    - "Strategic Domain Focus"
+  gap_detection_threshold: 0.75
+
+narrative_weighting:
+  capabilities: 0.35
+  chronology: 0.35
+  impact_stories: 0.30
+
+output_formatting:
+  target_page_budget: 2
+  tone_style: "executive-tactical"
+  cover_letter_template: "modular-assembler-v1"

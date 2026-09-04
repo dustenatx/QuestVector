@@ -1,0 +1,25 @@
+schema_version: "1.0"
+mission_id: "senior-it-project-mgr"
+metadata:
+  title: "Senior IT Project Manager / Delivery Lead"
+  author: "QuestVector Starter Pack"
+  version: "1.0.0"
+  description: "Starter mission template tailored for Senior IT Project Manager / Delivery Lead roles."
+  tags: ["starter-pack", "it-leadership"]
+
+jd_analysis_rules:
+  priority_keywords:
+    - "Core Technical Competency 1"
+    - "Core Technical Competency 2"
+    - "Strategic Domain Focus"
+  gap_detection_threshold: 0.75
+
+narrative_weighting:
+  capabilities: 0.35
+  chronology: 0.35
+  impact_stories: 0.30
+
+output_formatting:
+  target_page_budget: 2
+  tone_style: "executive-tactical"
+  cover_letter_template: "modular-assembler-v1"
