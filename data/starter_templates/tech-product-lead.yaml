@@ -1,0 +1,18 @@
+id: tech-product-lead
+title: Senior / Group Product Manager (Technical)
+categories:
+  - name: product_strategy
+    weight: 0.30
+    keywords: [strategy, roadmap, vision, prioritization, product]
+  - name: technical_fluency
+    weight: 0.25
+    keywords: [api, architecture, technical, engineering, integration]
+  - name: stakeholder_leadership
+    weight: 0.20
+    keywords: [stakeholders, leadership, cross-functional, executive, alignment]
+  - name: data_driven_decisions
+    weight: 0.15
+    keywords: [metrics, analytics, kpi, experimentation, data]
+  - name: customer_discovery
+    weight: 0.10
+    keywords: [customer, research, discovery, feedback, market]

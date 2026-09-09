@@ -1,0 +1,18 @@
+id: sr-systems-admin
+title: Senior IT Infrastructure & Systems Specialist
+categories:
+  - name: systems_administration
+    weight: 0.30
+    keywords: [linux, windows, servers, active, directory, virtualization, vmware]
+  - name: networking
+    weight: 0.20
+    keywords: [networking, tcpip, dns, dhcp, vpn, firewall, switching]
+  - name: infrastructure_operations
+    weight: 0.20
+    keywords: [datacenter, backups, storage, patching, monitoring, uptime]
+  - name: automation_scripting
+    weight: 0.15
+    keywords: [scripting, powershell, bash, python, ansible, automation]
+  - name: security_hardening
+    weight: 0.15
+    keywords: [hardening, security, compliance, antivirus, endpoint]

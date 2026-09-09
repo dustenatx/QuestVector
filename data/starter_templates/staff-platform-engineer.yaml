@@ -1,0 +1,18 @@
+id: staff-platform-engineer
+title: Staff / Principal Platform Engineer
+categories:
+  - name: platform_architecture
+    weight: 0.35
+    keywords: [architecture, platform, microservices, api, scalability, design]
+  - name: cloud_infrastructure
+    weight: 0.25
+    keywords: [aws, kubernetes, terraform, docker, containers, iac, cloudnative]
+  - name: automation_tooling
+    weight: 0.20
+    keywords: [automation, cicd, scripting, python, golang, tooling]
+  - name: reliability_observability
+    weight: 0.15
+    keywords: [sre, observability, monitoring, incident, reliability, sla]
+  - name: technical_leadership
+    weight: 0.05
+    keywords: [mentoring, technical, leadership, roadmap, standards]

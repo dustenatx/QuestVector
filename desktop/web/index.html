@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QuestVector — Tactical Flight Deck</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="hud-header">
+    <div class="hud-brand">
+      <span class="hud-visor" aria-hidden="true"></span>
+      <div>
+        <h1>QuestVector</h1>
+        <p class="hud-subtitle">Tactical Flight Deck &mdash; Career Navigation</p>
+      </div>
+    </div>
+    <div class="hud-status" id="status-line">STANDBY</div>
+  </header>
+
+  <nav class="hud-tabs" id="tabs">
+    <button class="hud-tab active" data-tab="workspace">Workspace</button>
+    <button class="hud-tab" data-tab="dossier">Dossier</button>
+    <button class="hud-tab" data-tab="sync">Sync-AST</button>
+    <button class="hud-tab" data-tab="templates">Templates</button>
+    <button class="hud-tab" data-tab="export">Export</button>
+    <button class="hud-tab" data-tab="vault">Vault</button>
+  </nav>
+
+  <main class="hud-main">
+    <section class="hud-panel" id="panel-workspace" data-panel>
+      <h2>Workspace</h2>
+      <p class="hud-hint">Point QuestVector at a local career directory. Missing dossier files and starter mission templates are created automatically; existing files are never overwritten.</p>
+      <div class="hud-row">
+        <input type="text" id="workspace-dir" placeholder="/path/to/career-workspace" />
+        <button id="btn-launch">Launch Workspace</button>
+      </div>
+      <pre class="hud-output" id="workspace-output"></pre>
+    </section>
+
+    <section class="hud-panel hidden" id="panel-dossier" data-panel>
+      <h2>Dossier</h2>
+      <button id="btn-load-dossier">Load Dossier</button>
+      <div class="hud-grid" id="dossier-output"></div>
+    </section>
+
+    <section class="hud-panel hidden" id="panel-sync" data-panel>
+      <h2>Sync-AST &mdash; G-Force Match</h2>
+      <div class="hud-row">
+        <select id="template-select"><option value="">Select mission template&hellip;</option></select>
+        <button id="btn-refresh-templates">Refresh</button>
+      </div>
+      <textarea id="jd-text" placeholder="Paste job description text here&hellip;" rows="8"></textarea>
+      <button id="btn-run-scan">Run Scan</button>
+
+      <div class="gauge-wrap">
+        <svg viewBox="0 0 200 120" class="gauge">
+          <path d="M10,110 A90,90 0 0 1 190,110" class="gauge-track" />
+          <path d="M10,110 A90,90 0 0 1 190,110" class="gauge-fill" id="gauge-fill" />
+        </svg>
+        <div class="gauge-readout" id="gauge-readout">--.-%</div>
+        <div class="gauge-label" id="gauge-alert">SCAN COMPLETE</div>
+      </div>
+
+      <div class="hud-grid">
+        <div>
+          <h3>Category Coverage</h3>
+          <ul id="category-list" class="hud-list"></ul>
+        </div>
+        <div>
+          <h3 class="text-warning">Gaps</h3>
+          <ul id="gaps-list" class="hud-list warning"></ul>
+          <h3 class="text-critical">Red Flags</h3>
+          <ul id="red-flags-list" class="hud-list critical"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="hud-panel hidden" id="panel-templates" data-panel>
+      <h2>Mission Template Validator</h2>
+      <div class="hud-row">
+        <input type="text" id="template-path" placeholder="/path/to/template.yaml" />
+        <label class="hud-checkbox"><input type="checkbox" id="template-fix" /> --fix</label>
+        <button id="btn-validate-template">Validate</button>
+      </div>
+      <pre class="hud-output" id="template-output"></pre>
+    </section>
+
+    <section class="hud-panel hidden" id="panel-export" data-panel>
+      <h2>Export Bundle</h2>
+      <div class="hud-row">
+        <input type="text" id="export-name" placeholder="bundle-name" />
+        <select id="export-format">
+          <option value="pdf">PDF</option>
+          <option value="docx">DOCX</option>
+        </select>
+        <button id="btn-export">Export</button>
+      </div>
+      <p class="hud-hint">Uses the last Sync-AST scan's job description/template as the match summary, if one has been run.</p>
+      <pre class="hud-output" id="export-output"></pre>
+    </section>
+
+    <section class="hud-panel hidden" id="panel-vault" data-panel>
+      <h2>Encrypted Vault</h2>
+      <div class="hud-row">
+        <input type="password" id="vault-passphrase" placeholder="Vault passphrase" />
+        <input type="password" id="vault-api-key" placeholder="LLM API key" />
+        <button id="btn-set-key">Store Key</button>
+      </div>
+      <div class="hud-row">
+        <button id="btn-generate-narrative">Generate Narrative from Last Scan</button>
+      </div>
+      <pre class="hud-output" id="vault-output"></pre>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

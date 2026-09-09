@@ -1,0 +1,18 @@
+id: cybersec-ops-director
+title: Director of Cybersecurity & SecOps
+categories:
+  - name: security_strategy
+    weight: 0.25
+    keywords: [strategy, risk, governance, roadmap, ciso, program]
+  - name: compliance_frameworks
+    weight: 0.20
+    keywords: [iso27001, soc2, hipaa, pci, nist, audit, compliance]
+  - name: vulnerability_management
+    weight: 0.20
+    keywords: [vulnerability, scanning, remediation, patching, tenable, wiz]
+  - name: incident_response
+    weight: 0.15
+    keywords: [incident, response, forensics, siem, soc, threat]
+  - name: leadership_budget
+    weight: 0.20
+    keywords: [director, budget, leadership, hiring, stakeholders, mentoring]

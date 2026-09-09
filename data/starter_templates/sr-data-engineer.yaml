@@ -1,0 +1,18 @@
+id: sr-data-engineer
+title: Senior / Principal Data Engineer
+categories:
+  - name: data_pipelines
+    weight: 0.30
+    keywords: [etl, elt, pipelines, airflow, dbt, streaming, kafka]
+  - name: data_warehousing
+    weight: 0.25
+    keywords: [warehouse, snowflake, redshift, bigquery, sql, modeling]
+  - name: cloud_infrastructure
+    weight: 0.20
+    keywords: [aws, azure, gcp, terraform, kubernetes, spark]
+  - name: languages_tooling
+    weight: 0.15
+    keywords: [python, scala, java, git, orchestration]
+  - name: data_governance
+    weight: 0.10
+    keywords: [governance, quality, lineage, compliance, security]

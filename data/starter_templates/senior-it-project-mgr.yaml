@@ -1,0 +1,18 @@
+id: senior-it-project-mgr
+title: Senior IT Project Manager / Delivery Lead
+categories:
+  - name: delivery_management
+    weight: 0.30
+    keywords: [delivery, project, program, roadmap, milestones, scope]
+  - name: stakeholder_communication
+    weight: 0.25
+    keywords: [stakeholders, communication, executive, reporting, alignment]
+  - name: methodology
+    weight: 0.20
+    keywords: [agile, scrum, kanban, waterfall, pmp, sprint]
+  - name: budget_resourcing
+    weight: 0.15
+    keywords: [budget, resourcing, vendor, procurement, forecasting]
+  - name: risk_management
+    weight: 0.10
+    keywords: [risk, mitigation, dependencies, issues, escalation]

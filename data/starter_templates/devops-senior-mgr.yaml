@@ -1,0 +1,18 @@
+id: devops-senior-mgr
+title: Senior DevOps & Platform Operations Manager
+categories:
+  - name: cloud_infrastructure
+    weight: 0.30
+    keywords: [aws, azure, gcp, terraform, kubernetes, docker, cloudformation, iac]
+  - name: cicd_automation
+    weight: 0.20
+    keywords: [cicd, jenkins, github, actions, pipelines, automation, deployment]
+  - name: reliability_operations
+    weight: 0.20
+    keywords: [sre, oncall, incident, monitoring, observability, uptime, sla, alerting]
+  - name: leadership
+    weight: 0.20
+    keywords: [manager, mentoring, hiring, budget, stakeholders, leadership, team]
+  - name: security_compliance
+    weight: 0.10
+    keywords: [compliance, iso27001, soc2, vulnerability, hardening, iam]

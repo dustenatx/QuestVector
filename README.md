@@ -1,4 +1,5 @@
 # 🚀 QuestVector
+### *Pre-Beta: Has not been tested*
 ### *Command your job search with a zero-install, privacy-first career flight deck. Deconstruct JDs, track applications, and own your career data.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)

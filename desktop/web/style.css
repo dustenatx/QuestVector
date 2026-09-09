@@ -1,0 +1,167 @@
+/* QuestVector Tactical Ops Flight Deck theme.
+   Palette per MASTER_DEVELOPER_SPEC.pdf Section 1 (Brand Bible). */
+:root {
+  --obsidian-void: #0b0f19;
+  --cockpit-slate: #0d1322;
+  --vector-cyan: #00f2fe;
+  --tactical-green: #10b981;
+  --afterburner-amber: #f59e0b;
+  --lock-on-red: #ef4444;
+  --hud-border: #1c2740;
+  --hud-text: #d7e2f5;
+  --hud-text-dim: #7c8aa8;
+  --font-heading: "Inter", "JetBrains Mono", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Fira Code", "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--obsidian-void);
+  color: var(--hud-text);
+  font-family: var(--font-heading);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.4em 0;
+}
+
+.hidden { display: none !important; }
+
+.hud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: linear-gradient(180deg, var(--cockpit-slate), var(--obsidian-void));
+  border-bottom: 1px solid var(--vector-cyan);
+}
+
+.hud-brand { display: flex; align-items: center; gap: 12px; }
+
+.hud-visor {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--vector-cyan), #063b42 70%);
+  box-shadow: 0 0 12px var(--vector-cyan);
+  display: inline-block;
+}
+
+.hud-header h1 { font-size: 1.3rem; color: var(--vector-cyan); }
+.hud-subtitle { margin: 0; font-size: 0.75rem; color: var(--hud-text-dim); }
+
+.hud-status {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--tactical-green);
+  border: 1px solid var(--tactical-green);
+  padding: 4px 10px;
+  border-radius: 3px;
+}
+
+.hud-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 20px 0;
+  border-bottom: 1px solid var(--hud-border);
+}
+
+.hud-tab {
+  background: var(--cockpit-slate);
+  color: var(--hud-text-dim);
+  border: 1px solid var(--hud-border);
+  border-bottom: none;
+  padding: 8px 16px;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+}
+
+.hud-tab.active { color: var(--vector-cyan); border-color: var(--vector-cyan); }
+
+.hud-main { padding: 20px; max-width: 980px; margin: 0 auto; }
+
+.hud-panel {
+  background: var(--cockpit-slate);
+  border: 1px solid var(--hud-border);
+  border-radius: 6px;
+  padding: 20px;
+}
+
+.hud-hint { color: var(--hud-text-dim); font-size: 0.85rem; }
+
+.hud-row { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; align-items: center; }
+
+input[type="text"], input[type="password"], select, textarea {
+  background: var(--obsidian-void);
+  border: 1px solid var(--hud-border);
+  color: var(--hud-text);
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  flex: 1;
+  min-width: 200px;
+}
+
+textarea { width: 100%; resize: vertical; }
+
+button {
+  background: transparent;
+  border: 1px solid var(--vector-cyan);
+  color: var(--vector-cyan);
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  font-family: var(--font-heading);
+}
+
+button:hover { background: rgba(0, 242, 254, 0.12); }
+
+.hud-checkbox { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--hud-text-dim); }
+
+.hud-output {
+  background: var(--obsidian-void);
+  border: 1px solid var(--hud-border);
+  border-radius: 4px;
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  min-height: 2.4em;
+}
+
+.hud-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 12px; }
+
+.hud-list { list-style: none; padding: 0; margin: 0; font-family: var(--font-mono); font-size: 0.8rem; }
+.hud-list li { padding: 4px 0; border-bottom: 1px solid var(--hud-border); }
+.hud-list.warning li { color: var(--afterburner-amber); }
+.hud-list.critical li { color: var(--lock-on-red); }
+
+.text-warning { color: var(--afterburner-amber); }
+.text-critical { color: var(--lock-on-red); }
+
+.gauge-wrap { position: relative; width: 220px; margin: 16px auto; text-align: center; }
+.gauge { width: 100%; }
+.gauge-track { fill: none; stroke: var(--hud-border); stroke-width: 14; }
+.gauge-fill {
+  fill: none;
+  stroke: var(--vector-cyan);
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-dasharray: 282.6;
+  stroke-dashoffset: 282.6;
+  transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease;
+}
+.gauge-readout { font-family: var(--font-mono); font-size: 1.4rem; margin-top: -34px; color: var(--vector-cyan); }
+.gauge-label { font-size: 0.7rem; letter-spacing: 1px; color: var(--hud-text-dim); text-transform: uppercase; }
