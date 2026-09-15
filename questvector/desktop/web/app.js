@@ -8,6 +8,7 @@ const GAUGE_CIRCUMFERENCE = 282.6;
 
 let apiReady = false;
 let lastScan = { jdText: "", templateId: "" };
+let llmProviders = [];
 
 function setStatus(text, tone = "success") {
   const el = document.getElementById("status-line");
@@ -44,6 +45,7 @@ document.getElementById("tabs").addEventListener("click", (event) => {
   document.querySelectorAll("[data-panel]").forEach((panel) => panel.classList.add("hidden"));
   document.getElementById(`panel-${button.dataset.tab}`).classList.remove("hidden");
   if (button.dataset.tab === "sync") refreshTemplates();
+  if (button.dataset.tab === "vault" && llmProviders.length === 0) loadLlmProviders();
 });
 
 // --- Workspace -----------------------------------------------------------
@@ -178,15 +180,56 @@ document.getElementById("btn-export").addEventListener("click", async () => {
 
 // --- Vault ---------------------------------------------------------------
 
+async function loadLlmProviders() {
+  const api = requireApi();
+  const response = await api.list_llm_providers();
+  if (!response.ok) return;
+  llmProviders = response.data.providers;
+  const select = document.getElementById("vault-provider");
+  select.innerHTML = '<option value="">Select LLM provider&hellip;</option>';
+  for (const provider of llmProviders) {
+    const option = document.createElement("option");
+    option.value = provider.id;
+    option.textContent = provider.is_local ? `${provider.display_name} (local)` : provider.display_name;
+    select.appendChild(option);
+  }
+}
+
+function updateProviderNote() {
+  const providerId = document.getElementById("vault-provider").value;
+  const provider = llmProviders.find((p) => p.id === providerId);
+  const note = document.getElementById("vault-provider-note");
+  const apiKeyInput = document.getElementById("vault-api-key");
+  if (!provider) {
+    note.textContent = "";
+    apiKeyInput.disabled = false;
+    return;
+  }
+  const setupLink = provider.api_key_setup_url
+    ? (provider.requires_api_key ? `Get a key: ${provider.api_key_setup_url}` : `Install: ${provider.api_key_setup_url}`)
+    : "";
+  note.textContent = [provider.setup_note, setupLink].filter(Boolean).join(" ");
+  apiKeyInput.disabled = !provider.requires_api_key;
+  apiKeyInput.placeholder = provider.requires_api_key
+    ? `${provider.display_name} API key`
+    : "Not needed for this provider";
+}
+
+document.getElementById("vault-provider").addEventListener("change", updateProviderNote);
+
 document.getElementById("btn-set-key").addEventListener("click", async () => {
   const api = requireApi();
   const dir = currentWorkspaceDir();
+  const providerId = document.getElementById("vault-provider").value;
+  const provider = llmProviders.find((p) => p.id === providerId);
   const passphrase = document.getElementById("vault-passphrase").value;
   const apiKey = document.getElementById("vault-api-key").value;
-  if (!dir || !passphrase || !apiKey) return setStatus("DIR, PASSPHRASE, AND KEY REQUIRED", "warning");
-  const response = await api.set_llm_key(dir, passphrase, apiKey);
+  const model = document.getElementById("vault-model").value.trim();
+  if (!dir || !providerId || !passphrase) return setStatus("DIR, PROVIDER, AND PASSPHRASE REQUIRED", "warning");
+  if (provider && provider.requires_api_key && !apiKey) return setStatus("THIS PROVIDER REQUIRES AN API KEY", "warning");
+  const response = await api.set_llm_key(dir, passphrase, providerId, apiKey, model, "");
   renderJson("vault-output", response);
-  setStatus(response.ok ? "KEY STORED" : "VAULT ERROR", response.ok ? "success" : "critical");
+  setStatus(response.ok ? "PROVIDER STORED" : "VAULT ERROR", response.ok ? "success" : "critical");
 });
 
 document.getElementById("btn-generate-narrative").addEventListener("click", async () => {

@@ -8,9 +8,11 @@ same *guarantee* — AES-256-GCM authenticated encryption at rest, keyed by a
 user passphrase — as a single local JSON file instead.
 
 Per the Stage 1 blueprint decision to include real LLM integration (see
-:mod:`questvector.core.llm`), this vault is where the user's LLM API key is
-stored: never in plaintext, never logged, and never in the Markdown dossier
-files themselves.
+:mod:`questvector.core.llm`), this vault is where the user's LLM provider
+selection and API key(s) are stored: never in plaintext, never logged, and
+never in the Markdown dossier files themselves. Multiple cloud providers'
+keys can be stored side by side (see :class:`VaultData`), so switching the
+active provider doesn't require re-entering a key that was already saved.
 """
 
 from __future__ import annotations
@@ -43,35 +45,84 @@ class VaultData:
     """Plaintext contents of an unlocked vault.
 
     Attributes:
-        llm_api_key: The user's LLM provider API key, or ``None`` if not
-            configured.
+        llm_provider: Which configured provider (see
+            :data:`questvector.core.llm.PROVIDERS`) is active for narrative
+            generation -- e.g. ``"anthropic"``, ``"openai"``, ``"gemini"``,
+            or ``"ollama"`` -- or ``None`` if nothing has been configured
+            yet.
+        llm_api_keys: API keys for cloud providers, keyed by provider id.
+            The local ``"ollama"`` provider never has an entry here since
+            it needs no key.
+        llm_model: Optional model override for ``llm_provider``. ``None``
+            means use that provider's default model.
+        llm_host: Optional server override, used only by the local
+            ``"ollama"`` provider to point at a non-default local server.
         session_cache: Arbitrary small key/value cache (e.g. the "template
             registry cache" from the spec) — not intended for large data.
     """
 
-    llm_api_key: str | None = None
+    llm_provider: str | None = None
+    llm_api_keys: dict[str, str] = field(default_factory=dict)
+    llm_model: str | None = None
+    llm_host: str | None = None
     session_cache: dict[str, Any] = field(default_factory=dict)
+
+    def api_key_for(self, provider: str) -> str | None:
+        """Look up the stored API key for a provider, if any.
+
+        Args:
+            provider: Provider id (e.g. ``"anthropic"``).
+
+        Returns:
+            The stored key, or ``None`` if no key is stored for that
+            provider (always ``None`` for ``"ollama"``, which needs none).
+        """
+        return self.llm_api_keys.get(provider)
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to a JSON-encodable dict.
 
         Returns:
-            A plain dict with ``llm_api_key`` and ``session_cache``.
+            A plain dict with the LLM provider fields and ``session_cache``.
         """
-        return {"llm_api_key": self.llm_api_key, "session_cache": self.session_cache}
+        return {
+            "llm_provider": self.llm_provider,
+            "llm_api_keys": self.llm_api_keys,
+            "llm_model": self.llm_model,
+            "llm_host": self.llm_host,
+            "session_cache": self.session_cache,
+        }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> VaultData:
         """Reconstruct from a decoded dict.
 
+        Transparently migrates the single-provider vault schema used before
+        multi-provider support existed (a bare ``llm_api_key`` string,
+        always Anthropic) into the current ``llm_provider``/``llm_api_keys``
+        shape, so an older vault file keeps working without the user having
+        to re-run ``qv vault set-key``.
+
         Args:
-            data: The dict produced by :meth:`to_dict`.
+            data: The dict produced by :meth:`to_dict` (or an older
+                version's equivalent).
 
         Returns:
             A :class:`VaultData` instance.
         """
+        llm_api_keys = dict(data.get("llm_api_keys") or {})
+        llm_provider = data.get("llm_provider")
+
+        legacy_key = data.get("llm_api_key")
+        if legacy_key and "llm_provider" not in data:
+            llm_provider = "anthropic"
+            llm_api_keys.setdefault("anthropic", legacy_key)
+
         return cls(
-            llm_api_key=data.get("llm_api_key"),
+            llm_provider=llm_provider,
+            llm_api_keys=llm_api_keys,
+            llm_model=data.get("llm_model"),
+            llm_host=data.get("llm_host"),
             session_cache=dict(data.get("session_cache", {})),
         )
 

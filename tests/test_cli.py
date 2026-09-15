@@ -8,8 +8,25 @@ from unittest.mock import patch
 
 import pytest
 
-from questvector import cli
+from questvector import __version__, cli
 from questvector.core import vault
+
+
+def test_version_flag_prints_version_and_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(["--version"])
+
+    assert exc_info.value.code == 0
+    assert __version__ in capsys.readouterr().out
+
+
+def test_installed_package_version_matches_dunder_version() -> None:
+    # pyproject.toml sources its packaging version from questvector.__version__
+    # (see [tool.setuptools.dynamic]) rather than duplicating the string --
+    # this guards against the two silently drifting apart again.
+    import importlib.metadata
+
+    assert importlib.metadata.version("questvector") == __version__
 
 
 def test_launch_creates_workspace(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -137,9 +154,13 @@ def test_export_with_narrative_calls_llm_generator(
     jd_path = tmp_path / "jd.txt"
     jd_path.write_text("Looking for AWS Terraform experience", encoding="utf-8")
     monkeypatch.setattr(cli.getpass, "getpass", lambda *_a, **_k: "pass")
-    vault.save_vault(workspace_dir / ".questvector.vault", "pass", vault.VaultData(llm_api_key="sk-fake"))
+    vault.save_vault(
+        workspace_dir / ".questvector.vault",
+        "pass",
+        vault.VaultData(llm_provider="anthropic", llm_api_keys={"anthropic": "sk-fake"}),
+    )
 
-    with patch("questvector.cli.AnthropicNarrativeGenerator") as mock_generator_cls:
+    with patch("questvector.core.llm.AnthropicNarrativeGenerator") as mock_generator_cls:
         mock_generator_cls.return_value.generate.return_value = "Generated narrative text."
         exit_code = cli.main(
             [
@@ -170,8 +191,40 @@ def test_vault_set_key_stores_encrypted_key(
     responses = iter(["my-passphrase", "sk-my-api-key"])
     monkeypatch.setattr(cli.getpass, "getpass", lambda *_args, **_kwargs: next(responses))
 
-    exit_code = cli.main(["vault", "set-key", "--dir", str(workspace_dir)])
+    exit_code = cli.main(["vault", "set-key", "--dir", str(workspace_dir), "--provider", "anthropic"])
 
     assert exit_code == 0
     loaded = vault.load_vault(workspace_dir / ".questvector.vault", "my-passphrase")
-    assert loaded.llm_api_key == "sk-my-api-key"
+    assert loaded.llm_provider == "anthropic"
+    assert loaded.api_key_for("anthropic") == "sk-my-api-key"
+
+
+def test_vault_set_key_ollama_needs_no_api_key_prompt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    workspace_dir = tmp_path / "ws"
+    workspace_dir.mkdir()
+    # Only the vault passphrase should be requested -- a second call would
+    # mean the CLI wrongly prompted for an API key Ollama doesn't need.
+    responses = iter(["my-passphrase"])
+    monkeypatch.setattr(cli.getpass, "getpass", lambda *_args, **_kwargs: next(responses))
+
+    exit_code = cli.main(
+        ["vault", "set-key", "--dir", str(workspace_dir), "--provider", "ollama", "--model", "llama3.1"]
+    )
+
+    assert exit_code == 0
+    loaded = vault.load_vault(workspace_dir / ".questvector.vault", "my-passphrase")
+    assert loaded.llm_provider == "ollama"
+    assert loaded.llm_model == "llama3.1"
+    assert loaded.api_key_for("ollama") is None
+
+
+def test_vault_set_key_unknown_provider_rejected_by_argparse(tmp_path: Path) -> None:
+    # --provider is constrained to PROVIDERS via argparse `choices`, so an
+    # unknown value never reaches _cmd_vault_set_key's own guard clause.
+    workspace_dir = tmp_path / "ws"
+    workspace_dir.mkdir()
+
+    with pytest.raises(SystemExit):
+        cli.main(["vault", "set-key", "--dir", str(workspace_dir), "--provider", "not-a-real-provider"])

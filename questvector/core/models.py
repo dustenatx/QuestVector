@@ -144,17 +144,55 @@ class TemplateCategory:
 class MissionTemplate:
     """A community/starter mission template (spec Section 4).
 
+    Schema reconciled between MASTER_DEVELOPER_SPEC.pdf Section 4 (which
+    names the templates but not their format) and the community
+    ``CONTRIBUTING_TEMPLATES.md`` schema (``mission_id``/``metadata``/
+    ``jd_analysis``/``output_formatting``) already published on the
+    project's GitHub repo — see :mod:`questvector.core.templates` for the
+    full reconciliation notes. ``categories`` (this build's own weighted
+    JD-matching dimensions) is kept from the original Stage 1 design rather
+    than the community doc's fixed ``narrative_weighting`` three-way split,
+    since per-role category keywords are strictly more expressive and this
+    is what :mod:`questvector.core.matcher` is built and tested against.
+
     Attributes:
-        template_id: Filename stem, e.g. "devops-senior-mgr".
+        template_id: Mission identifier (``mission_id`` in YAML; filename
+            stem if omitted).
         title: Human-readable role title.
-        categories: Weighted scoring categories.
+        categories: Weighted JD-matching scoring categories.
         source_path: Filesystem path the template was loaded from, if any.
+        author: Optional contributor attribution.
+        version: Optional template version string.
+        description: Optional human-readable summary.
+        tags: Optional free-form category tags.
+        red_flag_phrases: Literal phrases to scan for directly in a job
+            description's text (e.g. "unrealistic requirement") — distinct
+            from the matcher's own derived, coverage-based red flags.
+        gap_coverage_threshold: Category coverage fraction below which a
+            whole category is additionally reported as "weak" (see
+            :class:`MatchResult.weak_categories`), independent of
+            individual missing keywords.
+        tone_style: Optional narrative-generation tone hint (e.g.
+            "executive-tactical"), passed through to
+            :func:`questvector.core.llm.build_narrative_prompt` when set.
+        target_page_budget: Optional target page count for exported
+            bundles. Captured and validated, but not yet enforced by
+            :mod:`questvector.core.exporter` — documented as a known gap
+            rather than silently ignored.
     """
 
     template_id: str
     title: str
     categories: tuple[TemplateCategory, ...] = field(default_factory=tuple)
     source_path: str | None = None
+    author: str | None = None
+    version: str | None = None
+    description: str | None = None
+    tags: tuple[str, ...] = field(default_factory=tuple)
+    red_flag_phrases: tuple[str, ...] = field(default_factory=tuple)
+    gap_coverage_threshold: float | None = None
+    tone_style: str | None = None
+    target_page_budget: int | None = None
 
     def weight_sum(self) -> float:
         """Return the sum of all category weights.
@@ -195,8 +233,14 @@ class MatchResult:
         g_force_score: Overall weighted match percentage, ``0.0``-``100.0``.
         category_scores: Per-category breakdown.
         gaps: Keywords flagged as missing/weak (Afterburner Amber).
-        red_flags: Keywords or conditions flagged as critical (Lock-On Red)
-            — e.g. a category with zero coverage and a high template weight.
+        red_flags: Conditions flagged as critical (Lock-On Red) — a
+            category with zero coverage and a high template weight, or a
+            template-declared ``red_flag_phrases`` entry found verbatim in
+            the job description text.
+        weak_categories: Category names whose coverage fell below the
+            template's ``gap_coverage_threshold`` (when set), reported
+            separately from per-keyword ``gaps`` since a category can be
+            "weak" overall without every individual keyword being missing.
         alert_level: Overall severity derived from the score and red flags.
     """
 
@@ -204,4 +248,5 @@ class MatchResult:
     category_scores: tuple[CategoryScore, ...] = field(default_factory=tuple)
     gaps: tuple[str, ...] = field(default_factory=tuple)
     red_flags: tuple[str, ...] = field(default_factory=tuple)
+    weak_categories: tuple[str, ...] = field(default_factory=tuple)
     alert_level: AlertLevel = AlertLevel.WARNING

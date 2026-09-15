@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "questvector"
+dynamic = ["version"]
+description = "QuestVector — local-first career navigation & flight deck platform (Python desktop implementation)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Dusten Harrison" }]
+
+dependencies = [
+    "PyYAML>=6.0",
+    "cryptography>=42.0",
+    "reportlab>=4.0",
+    "python-docx>=1.1",
+    "pywebview>=5.1",
+]
+
+[project.optional-dependencies]
+# Cloud LLM providers each ship as their own extra, so installing one
+# doesn't pull in the other two SDKs. `llm` is a convenience extra that
+# installs all three at once. The fourth supported provider, Ollama, needs
+# no extra -- it's driven over plain HTTP via the standard library, since
+# it's a local server the user runs themselves (see questvector/core/llm.py).
+llm-anthropic = ["anthropic>=0.40"]
+llm-openai = ["openai>=1.50"]
+llm-gemini = ["google-genai>=0.3"]
+llm = ["anthropic>=0.40", "openai>=1.50", "google-genai>=0.3"]
+dev = ["pytest>=8.0", "pytest-mock>=3.14", "pytest-cov>=5.0"]
+
+[project.scripts]
+qv = "questvector.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.setuptools.packages.find]
+include = ["questvector*"]
+
+[tool.setuptools.dynamic]
+# Single source of truth for the app version: questvector/__init__.py's
+# __version__. Packaging metadata (pip show, `qv --version`) is derived
+# from it rather than duplicated here, so the two can't drift apart.
+version = { attr = "questvector.__version__" }
+
+[tool.setuptools.package-data]
+questvector = ["data/starter_templates/*.yaml", "desktop/web/*"]

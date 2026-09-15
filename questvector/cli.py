@@ -17,11 +17,17 @@ Commands
     qv template validate PATH [--fix] [--json]
         Lint a mission template YAML file; with --fix, rescale weights to
         sum to 1.00 and persist the fix.
-    qv vault set-key [--dir PATH]
-        Store an LLM API key in the workspace's encrypted vault. This
-        command is an addition beyond the original spec's CLI table,
-        necessary to make narrative generation (Stage 1 blueprint decision)
-        usable at all without a plaintext key on disk.
+    qv vault set-key --provider {anthropic,openai,gemini,ollama} [--dir PATH] [--model NAME] [--host URL]
+        Store an LLM provider selection (and, for cloud providers, an API
+        key) in the workspace's encrypted vault. This command is an
+        addition beyond the original spec's CLI table, necessary to make
+        narrative generation (Stage 1 blueprint decision) usable at all
+        without a plaintext key on disk.
+    qv --version
+        Print the installed QuestVector version (from
+        ``questvector.__version__``, the single source of truth also used
+        by ``pyproject.toml``'s packaging metadata -- see that file's
+        ``[tool.setuptools.dynamic]`` section).
 """
 
 from __future__ import annotations
@@ -32,13 +38,14 @@ import json
 import sys
 from pathlib import Path
 
+from questvector import __version__
 from questvector.core import matcher, templates, workspace
 from questvector.core.exporter import export_bundle
-from questvector.core.llm import AnthropicNarrativeGenerator, build_narrative_prompt
+from questvector.core.llm import PROVIDERS, build_narrative_prompt, create_narrative_generator
 from questvector.core.markdown_parser import parse_dossier
 from questvector.core.models import MissionTemplate
 from questvector.core.vault import VaultData, load_vault, update_vault
-from questvector.exceptions import QuestVectorError
+from questvector.exceptions import LLMError, QuestVectorError
 
 _VAULT_FILENAME = ".questvector.vault"
 
@@ -56,15 +63,31 @@ def _resolve_workspace_dir(raw: str | None) -> Path:
     return Path(raw).expanduser().resolve() if raw else Path.cwd()
 
 
+def _template_search_dirs(workspace_dir: Path) -> list[Path]:
+    """Return the ordered list of directories a workspace searches for templates.
+
+    Args:
+        workspace_dir: The workspace directory.
+
+    Returns:
+        ``templates/starter`` (built-in, spec Section 4), then
+        ``templates/community`` (contributions per ``CONTRIBUTING_TEMPLATES.md``),
+        then ``templates/`` itself as a final fallback.
+    """
+    return [
+        workspace_dir / "templates" / "starter",
+        workspace_dir / "templates" / "community",
+        workspace_dir / "templates",
+    ]
+
+
 def _find_template(workspace_dir: Path, template_id: str) -> MissionTemplate:
     """Locate and load a mission template by id from a workspace.
 
-    Searches ``templates/starter/`` and ``templates/`` for
-    ``<template_id>.yaml`` or ``.yml``.
-
     Args:
         workspace_dir: The workspace directory to search.
-        template_id: The template's ``id`` (filename stem).
+        template_id: The template's mission id (filename stem, minus any
+            ``.qv-mission`` extension).
 
     Returns:
         The loaded :class:`MissionTemplate`.
@@ -72,21 +95,17 @@ def _find_template(workspace_dir: Path, template_id: str) -> MissionTemplate:
     Raises:
         QuestVectorError: If no matching template file is found.
     """
-    search_dirs = [
-        workspace_dir / "templates" / "starter",
-        workspace_dir / "templates",
-    ]
-    for directory in search_dirs:
-        for extension in (".yaml", ".yml"):
-            candidate = directory / f"{template_id}{extension}"
-            if candidate.exists():
-                return templates.load_template(candidate)
+    search_dirs = _template_search_dirs(workspace_dir)
+    match = templates.find_template_file(search_dirs, template_id)
+    if match is not None:
+        return templates.load_template(match)
 
     available = sorted(
-        path.stem
-        for directory in search_dirs
-        if directory.is_dir()
-        for path in directory.glob("*.y*ml")
+        {
+            templates.template_id_from_filename(path.name)
+            for directory in search_dirs
+            for path in templates.list_template_files(directory)
+        }
     )
     raise QuestVectorError(
         f"No mission template found with id '{template_id}'",
@@ -148,6 +167,7 @@ def _cmd_sync_ast(args: argparse.Namespace) -> int:
                     "alert_level": result.alert_level.value,
                     "gaps": list(result.gaps),
                     "red_flags": list(result.red_flags),
+                    "weak_categories": list(result.weak_categories),
                     "categories": [
                         {
                             "name": c.name,
@@ -167,6 +187,8 @@ def _cmd_sync_ast(args: argparse.Namespace) -> int:
             print(f"  - {category.name}: {category.coverage * 100:.0f}% coverage (weight {category.weight:.2f})")
         if result.gaps:
             print(f"[QV] Gaps: {', '.join(result.gaps)}")
+        if result.weak_categories:
+            print(f"[QV] Weak categories: {', '.join(result.weak_categories)}")
         if result.red_flags:
             print(f"[QV] RED FLAGS: {'; '.join(result.red_flags)}")
     return 0
@@ -198,9 +220,18 @@ def _cmd_export(args: argparse.Namespace) -> int:
         passphrase = getpass.getpass("Vault passphrase: ")
         vault_path = workspace_dir / _VAULT_FILENAME
         vault_data = load_vault(vault_path, passphrase)
-        generator = AnthropicNarrativeGenerator(vault_data.llm_api_key or "")
+        if not vault_data.llm_provider:
+            raise LLMError(
+                "No LLM provider configured yet -- run 'qv vault set-key --provider <name>' first"
+            )
+        generator = create_narrative_generator(
+            vault_data.llm_provider,
+            api_key=vault_data.api_key_for(vault_data.llm_provider),
+            model=vault_data.llm_model,
+            host=vault_data.llm_host,
+        )
         dossier_context = "\n".join(c.text for c in dossier.capabilities[:20])
-        prompt = build_narrative_prompt(dossier_context, job_description.raw_text)
+        prompt = build_narrative_prompt(dossier_context, job_description.raw_text, tone_style=template.tone_style)
         narrative = generator.generate(prompt)
 
     output_dir = workspace_dir / "bundles"
@@ -242,17 +273,41 @@ def _cmd_vault_set_key(args: argparse.Namespace) -> int:
 
     Returns:
         Process exit code.
+
+    Raises:
+        LLMError: If ``--provider`` isn't a known provider id.
     """
+    spec = PROVIDERS.get(args.provider)
+    if spec is None:
+        known = ", ".join(sorted(PROVIDERS))
+        raise LLMError(f"Unknown LLM provider '{args.provider}' (known providers: {known})")
+
     workspace_dir = _resolve_workspace_dir(args.dir)
     vault_path = workspace_dir / _VAULT_FILENAME
     passphrase = getpass.getpass("Vault passphrase: ")
-    api_key = getpass.getpass("LLM API key: ")
+
+    api_key = ""
+    if spec.requires_api_key:
+        if spec.api_key_setup_url:
+            print(f"[QV] Get a {spec.display_name} API key here: {spec.api_key_setup_url}")
+        if spec.setup_note:
+            print(f"[QV] Note: {spec.setup_note}")
+        api_key = getpass.getpass(f"{spec.display_name} API key: ")
+    elif spec.setup_note:
+        print(f"[QV] {spec.display_name}: {spec.setup_note}")
+
+    model = args.model or spec.default_model
+    host = args.host
 
     def _set_key(data: VaultData) -> None:
-        data.llm_api_key = api_key
+        data.llm_provider = args.provider
+        data.llm_model = model
+        data.llm_host = host
+        if api_key:
+            data.llm_api_keys[args.provider] = api_key
 
     update_vault(vault_path, passphrase, _set_key)
-    print(f"[QV] LLM API key stored in encrypted vault: {vault_path}")
+    print(f"[QV] LLM provider '{args.provider}' (model: {model}) stored in encrypted vault: {vault_path}")
     return 0
 
 
@@ -263,6 +318,7 @@ def _build_parser() -> argparse.ArgumentParser:
         A configured :class:`argparse.ArgumentParser`.
     """
     parser = argparse.ArgumentParser(prog="qv", description="QuestVector career navigation CLI")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     launch = subparsers.add_parser("launch", help="Initialize a local career dossier workspace")
@@ -298,7 +354,17 @@ def _build_parser() -> argparse.ArgumentParser:
 
     vault = subparsers.add_parser("vault", help="Encrypted local vault operations")
     vault_subparsers = vault.add_subparsers(dest="vault_command", required=True)
-    set_key = vault_subparsers.add_parser("set-key", help="Store an LLM API key in the encrypted vault")
+    set_key = vault_subparsers.add_parser(
+        "set-key", help="Store an LLM provider (and, for cloud providers, an API key) in the encrypted vault"
+    )
+    set_key.add_argument(
+        "--provider",
+        required=True,
+        choices=sorted(PROVIDERS),
+        help="LLM provider to configure (anthropic, openai, gemini -- all remote; ollama -- local, no API key)",
+    )
+    set_key.add_argument("--model", help="Model override (default: the provider's default model)")
+    set_key.add_argument("--host", help="Server override, used only by --provider ollama")
     set_key.add_argument("--dir", help="Workspace directory (default: current directory)")
     set_key.set_defaults(func=_cmd_vault_set_key)
 

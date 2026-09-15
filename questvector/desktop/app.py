@@ -20,12 +20,30 @@ from typing import Any
 
 from questvector.core import matcher, templates, workspace
 from questvector.core.exporter import export_bundle as _export_bundle
-from questvector.core.llm import AnthropicNarrativeGenerator, build_narrative_prompt
+from questvector.core.llm import PROVIDERS, build_narrative_prompt, create_narrative_generator
 from questvector.core.markdown_parser import parse_dossier
 from questvector.core.vault import VaultData, load_vault, update_vault
-from questvector.exceptions import QuestVectorError
+from questvector.exceptions import LLMError, QuestVectorError
 
 _VAULT_FILENAME = ".questvector.vault"
+
+
+def _template_search_dirs(workspace_dir: Path) -> list[Path]:
+    """Return the ordered list of directories a workspace searches for templates.
+
+    Args:
+        workspace_dir: The workspace directory.
+
+    Returns:
+        ``templates/starter`` (built-in, spec Section 4), then
+        ``templates/community`` (contributions per ``CONTRIBUTING_TEMPLATES.md``),
+        then ``templates/`` itself as a final fallback.
+    """
+    return [
+        workspace_dir / "templates" / "starter",
+        workspace_dir / "templates" / "community",
+        workspace_dir / "templates",
+    ]
 
 
 def _ok(data: Any = None) -> dict[str, Any]:
@@ -113,15 +131,14 @@ class Api:
 
         Returns:
             A bridge response wrapping a list of ``{id, title, weight_sum}``
-            entries found under ``templates/`` and ``templates/starter/``.
+            entries found under ``templates/starter/``, ``templates/community/``,
+            and ``templates/``.
         """
         try:
             workspace_dir = Path(dir_path)
             found: list[dict[str, Any]] = []
-            for directory in (workspace_dir / "templates" / "starter", workspace_dir / "templates"):
-                if not directory.is_dir():
-                    continue
-                for path in sorted(directory.glob("*.y*ml")):
+            for directory in _template_search_dirs(workspace_dir):
+                for path in templates.list_template_files(directory):
                     template = templates.load_template(path)
                     found.append(
                         {
@@ -229,6 +246,32 @@ class Api:
         except QuestVectorError as exc:
             return _err(exc)
 
+    def list_llm_providers(self) -> dict[str, Any]:
+        """List supported LLM providers for the vault/narrative-generation UI.
+
+        Lets the front end render a provider picker with the correct
+        API-key setup link and note for whichever provider the user
+        selects, instead of hardcoding that copy in JavaScript.
+
+        Returns:
+            A bridge response wrapping a list of provider descriptors:
+            ``id``, ``display_name``, ``is_local``, ``requires_api_key``,
+            ``default_model``, ``api_key_setup_url``, and ``setup_note``.
+        """
+        providers = [
+            {
+                "id": spec.provider_id,
+                "display_name": spec.display_name,
+                "is_local": spec.is_local,
+                "requires_api_key": spec.requires_api_key,
+                "default_model": spec.default_model,
+                "api_key_setup_url": spec.api_key_setup_url,
+                "setup_note": spec.setup_note,
+            }
+            for spec in PROVIDERS.values()
+        ]
+        return _ok({"providers": providers})
+
     def generate_narrative(
         self, dir_path: str, jd_text: str, passphrase: str
     ) -> dict[str, Any]:
@@ -236,9 +279,11 @@ class Api:
 
         This is an explicit, user-triggered UI action rather than an
         automatic background call, since invoking it makes an outbound
-        network request to the configured LLM provider (see
-        :mod:`questvector.core.llm` for why that is a deliberate,
-        documented departure from the spec's "Zero-Cloud" claim).
+        network request to the configured LLM provider -- except for the
+        local Ollama provider, which never leaves the machine (see
+        :mod:`questvector.core.llm` for why the other three are a
+        deliberate, documented departure from the spec's "Zero-Cloud"
+        claim).
 
         Args:
             dir_path: Absolute path to the workspace directory.
@@ -254,7 +299,14 @@ class Api:
             dossier = parse_dossier(workspace_dir)
             vault_path = workspace_dir / _VAULT_FILENAME
             vault_data = load_vault(vault_path, passphrase)
-            generator = AnthropicNarrativeGenerator(vault_data.llm_api_key or "")
+            if not vault_data.llm_provider:
+                raise LLMError("No LLM provider configured yet -- store one in the Vault tab first")
+            generator = create_narrative_generator(
+                vault_data.llm_provider,
+                api_key=vault_data.api_key_for(vault_data.llm_provider),
+                model=vault_data.llm_model,
+                host=vault_data.llm_host,
+            )
             dossier_context = "\n".join(c.text for c in dossier.capabilities[:20])
             prompt = build_narrative_prompt(dossier_context, jd_text)
             narrative = generator.generate(prompt)
@@ -262,23 +314,50 @@ class Api:
         except QuestVectorError as exc:
             return _err(exc)
 
-    def set_llm_key(self, dir_path: str, passphrase: str, api_key: str) -> dict[str, Any]:
-        """Store an LLM API key in the workspace's encrypted vault.
+    def set_llm_key(
+        self,
+        dir_path: str,
+        passphrase: str,
+        provider: str,
+        api_key: str = "",
+        model: str = "",
+        host: str = "",
+    ) -> dict[str, Any]:
+        """Store an LLM provider selection (and API key, if any) in the vault.
 
         Args:
             dir_path: Absolute path to the workspace directory.
             passphrase: The vault passphrase (used to derive the
                 encryption key — never stored itself).
-            api_key: The LLM provider API key to encrypt and persist.
+            provider: Provider id from :data:`questvector.core.llm.PROVIDERS`
+                (e.g. ``"anthropic"``, ``"openai"``, ``"gemini"``,
+                ``"ollama"``).
+            api_key: The provider's API key. Ignored (may be empty) for the
+                local ``"ollama"`` provider, which needs none.
+            model: Optional model override; empty string means "use the
+                provider's default".
+            host: Optional server override, used only by ``"ollama"``.
 
         Returns:
             A bridge response indicating success.
+
+        Raises:
+            LLMError: If ``provider`` isn't a known provider id.
         """
         try:
+            spec = PROVIDERS.get(provider)
+            if spec is None:
+                known = ", ".join(sorted(PROVIDERS))
+                raise LLMError(f"Unknown LLM provider '{provider}' (known providers: {known})")
+
             vault_path = Path(dir_path) / _VAULT_FILENAME
 
             def _set_key(data: VaultData) -> None:
-                data.llm_api_key = api_key
+                data.llm_provider = provider
+                data.llm_model = model or spec.default_model
+                data.llm_host = host or None
+                if api_key:
+                    data.llm_api_keys[provider] = api_key
 
             update_vault(vault_path, passphrase, _set_key)
             return _ok({"vault_path": str(vault_path)})
@@ -291,7 +370,8 @@ class Api:
 
         Args:
             workspace_dir: The workspace directory to search.
-            template_id: The template's ``id`` (filename stem).
+            template_id: The template's mission id (filename stem, minus
+                any ``.qv-mission`` extension).
 
         Returns:
             The loaded :class:`~questvector.core.models.MissionTemplate`.
@@ -299,11 +379,9 @@ class Api:
         Raises:
             QuestVectorError: If no matching template file is found.
         """
-        for directory in (workspace_dir / "templates" / "starter", workspace_dir / "templates"):
-            for extension in (".yaml", ".yml"):
-                candidate = directory / f"{template_id}{extension}"
-                if candidate.exists():
-                    return templates.load_template(candidate)
+        match = templates.find_template_file(_template_search_dirs(workspace_dir), template_id)
+        if match is not None:
+            return templates.load_template(match)
         raise QuestVectorError(f"No mission template found with id '{template_id}'")
 
 

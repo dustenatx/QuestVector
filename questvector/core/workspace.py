@@ -23,6 +23,7 @@ from questvector.config import (
     BUNDLES_DIRNAME,
     CAPABILITIES_FILENAME,
     CHRONOLOGY_FILENAME,
+    COMMUNITY_TEMPLATES_DIRNAME,
     DOSSIER_FILENAMES,
     IMPACT_FILENAME,
     LOCK_FILENAME,
@@ -47,6 +48,14 @@ _DOSSIER_STUBS: dict[str, str] = {
         "- Add quantified impact statements as bullet points.\n"
     ),
 }
+
+_COMMUNITY_TEMPLATES_README = (
+    "# Community Mission Templates\n\n"
+    "Drop `<your-role-id>.qv-mission.yaml` files here to use custom mission "
+    "templates alongside the bundled starter set in `templates/starter/`. "
+    "See `CONTRIBUTING_TEMPLATES.md` at the project root for the schema and "
+    "how to submit one upstream.\n"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,8 +93,10 @@ def init_workspace(workspace_dir: Path) -> WorkspaceInitResult:
     """Initialize (``qv launch``) a local career dossier workspace.
 
     Creates the workspace directory if needed, seeds dossier stub files
-    (only if they don't already exist), and copies the bundled starter
-    mission templates into ``templates/starter/``.
+    (only if they don't already exist), copies the bundled starter mission
+    templates into ``templates/starter/``, and creates an empty
+    ``templates/community/`` directory (with a short README) for
+    contributed ``.qv-mission.yaml`` templates per ``CONTRIBUTING_TEMPLATES.md``.
 
     Args:
         workspace_dir: Target directory for the new/existing workspace.
@@ -109,6 +120,8 @@ def init_workspace(workspace_dir: Path) -> WorkspaceInitResult:
         workspace_dir.mkdir(parents=True, exist_ok=True)
         templates_dir = workspace_dir / TEMPLATES_DIRNAME / STARTER_TEMPLATES_DIRNAME
         templates_dir.mkdir(parents=True, exist_ok=True)
+        community_dir = workspace_dir / TEMPLATES_DIRNAME / COMMUNITY_TEMPLATES_DIRNAME
+        community_dir.mkdir(parents=True, exist_ok=True)
         (workspace_dir / BUNDLES_DIRNAME).mkdir(parents=True, exist_ok=True)
     except OSError as exc:
         raise WorkspaceError(
@@ -146,6 +159,19 @@ def init_workspace(workspace_dir: Path) -> WorkspaceInitResult:
                 context={"path": str(target), "os_error": str(exc)},
             ) from exc
         created.append(target)
+
+    community_readme = community_dir / "README.md"
+    if community_readme.exists():
+        skipped.append(community_readme)
+    else:
+        try:
+            community_readme.write_text(_COMMUNITY_TEMPLATES_README, encoding="utf-8")
+        except OSError as exc:
+            raise WorkspaceError(
+                "Could not write templates/community/README.md",
+                context={"path": str(community_readme), "os_error": str(exc)},
+            ) from exc
+        created.append(community_readme)
 
     return WorkspaceInitResult(
         workspace_dir=workspace_dir, created_files=tuple(created), skipped_files=tuple(skipped)

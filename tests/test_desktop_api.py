@@ -105,23 +105,64 @@ def test_set_llm_key_and_generate_narrative_error_without_key(tmp_path: Path) ->
     api = Api()
     api.launch_workspace(str(workspace_dir))
 
-    set_response = api.set_llm_key(str(workspace_dir), "pass", "")
+    set_response = api.set_llm_key(str(workspace_dir), "pass", "anthropic", "")
     assert set_response["ok"] is True
 
     narrative_response = api.generate_narrative(str(workspace_dir), "some jd text", "pass")
-    # No real API key was stored, so this must fail gracefully, not crash.
+    # A provider was stored but no real API key, so this must fail
+    # gracefully, not crash.
     assert narrative_response["ok"] is False
+
+
+def test_set_llm_key_unknown_provider_returns_error_envelope(tmp_path: Path) -> None:
+    workspace_dir = tmp_path / "ws"
+    api = Api()
+    api.launch_workspace(str(workspace_dir))
+
+    response = api.set_llm_key(str(workspace_dir), "pass", "not-a-real-provider", "some-key")
+
+    assert response["ok"] is False
+
+
+def test_set_llm_key_ollama_needs_no_api_key(tmp_path: Path) -> None:
+    workspace_dir = tmp_path / "ws"
+    api = Api()
+    api.launch_workspace(str(workspace_dir))
+
+    response = api.set_llm_key(str(workspace_dir), "pass", "ollama", "", "llama3.1")
+
+    assert response["ok"] is True
+    loaded = vault.load_vault(workspace_dir / ".questvector.vault", "pass")
+    assert loaded.llm_provider == "ollama"
+    assert loaded.llm_model == "llama3.1"
+    assert loaded.api_key_for("ollama") is None
 
 
 def test_generate_narrative_success_with_mocked_llm(tmp_path: Path) -> None:
     workspace_dir = tmp_path / "ws"
     api = Api()
     api.launch_workspace(str(workspace_dir))
-    vault.save_vault(workspace_dir / ".questvector.vault", "pass", vault.VaultData(llm_api_key="sk-fake"))
+    vault.save_vault(
+        workspace_dir / ".questvector.vault",
+        "pass",
+        vault.VaultData(llm_provider="anthropic", llm_api_keys={"anthropic": "sk-fake"}),
+    )
 
-    with patch("questvector.desktop.app.AnthropicNarrativeGenerator") as mock_generator_cls:
+    with patch("questvector.core.llm.AnthropicNarrativeGenerator") as mock_generator_cls:
         mock_generator_cls.return_value.generate.return_value = "Generated summary."
         response = api.generate_narrative(str(workspace_dir), "some jd text", "pass")
 
     assert response["ok"] is True
     assert response["data"]["narrative"] == "Generated summary."
+
+
+def test_list_llm_providers_includes_all_four() -> None:
+    api = Api()
+    response = api.list_llm_providers()
+
+    assert response["ok"] is True
+    ids = {provider["id"] for provider in response["data"]["providers"]}
+    assert ids == {"anthropic", "openai", "gemini", "ollama"}
+    ollama = next(p for p in response["data"]["providers"] if p["id"] == "ollama")
+    assert ollama["is_local"] is True
+    assert ollama["requires_api_key"] is False

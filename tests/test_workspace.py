@@ -21,6 +21,9 @@ def test_init_workspace_creates_dossier_stubs_and_starter_templates(tmp_path: Pa
     starter_dir = workspace_dir / "templates" / "starter"
     starter_templates = list(starter_dir.glob("*.yaml"))
     assert len(starter_templates) == 7
+    assert all(p.name.endswith(".qv-mission.yaml") for p in starter_templates)
+    assert (workspace_dir / "templates" / "community").is_dir()
+    assert (workspace_dir / "templates" / "community" / "README.md").exists()
     assert (workspace_dir / "bundles").is_dir()
     assert len(result.created_files) > 0
 

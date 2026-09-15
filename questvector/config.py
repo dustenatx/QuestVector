@@ -48,6 +48,7 @@ DOSSIER_FILENAMES: tuple[str, ...] = (
 # Workspace layout.
 TEMPLATES_DIRNAME = "templates"
 STARTER_TEMPLATES_DIRNAME = "starter"
+COMMUNITY_TEMPLATES_DIRNAME = "community"
 BUNDLES_DIRNAME = "bundles"
 LOCK_FILENAME = ".questvector.lock"
 VAULT_FILENAME = ".questvector.vault"

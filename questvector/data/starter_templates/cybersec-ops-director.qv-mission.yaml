@@ -1,5 +1,12 @@
-id: cybersec-ops-director
-title: Director of Cybersecurity & SecOps
+schema_version: "1.0"
+mission_id: cybersec-ops-director
+metadata:
+  title: Director of Cybersecurity & SecOps
+  author: QuestVector Core
+  version: "1.0.0"
+  description: Starter template for cybersecurity/SecOps director-level roles.
+  tags: [cybersecurity, secops, leadership]
+
 categories:
   - name: security_strategy
     weight: 0.25
@@ -16,3 +23,13 @@ categories:
   - name: leadership_budget
     weight: 0.20
     keywords: [director, budget, leadership, hiring, stakeholders, mentoring]
+
+jd_analysis:
+  gap_coverage_threshold: 0.5
+  red_flag_phrases:
+    - "individual contributor role"
+    - "no direct reports"
+
+output_formatting:
+  target_page_budget: 2
+  tone_style: executive-tactical

@@ -28,6 +28,17 @@ Algorithm
        dossier says nothing about.
     5. Any keyword in a gap-coverage category (coverage < 1.0) is surfaced
        as a **gap** (Afterburner Amber), deduplicated across categories.
+    6. If the template declares ``jd_analysis.red_flag_phrases`` (schema
+       from this project's ``CONTRIBUTING_TEMPLATES.md``), each phrase found
+       verbatim (case-insensitive) in the job description's raw text is
+       also added to ``red_flags`` — independent of dossier coverage,
+       matching spec Section 1's brand table entry for Lock-On Red: "Red
+       flags in JD."
+    7. If the template declares ``jd_analysis.gap_coverage_threshold``, any
+       category whose coverage falls below it is reported in
+       ``weak_categories``, separately from per-keyword ``gaps``, since a
+       category can be "weak" overall without every individual keyword
+       being missing.
 
 This is intentionally a transparent, tunable heuristic — not NLP/semantic
 matching — so its behavior is fully predictable and testable. Weights are
@@ -148,14 +159,22 @@ def run_match(dossier: Dossier, job_description: JobDescription, template: Missi
 
     gaps: set[str] = set()
     red_flags: list[str] = []
+    weak_categories: list[str] = []
     for score in category_scores:
         gaps.update(score.gap_keywords)
         if score.weight >= MATCH_RED_FLAG_WEIGHT_THRESHOLD and score.coverage == 0.0:
             red_flags.append(f"No dossier coverage for high-weight category '{score.name}'")
+        if template.gap_coverage_threshold is not None and score.coverage < template.gap_coverage_threshold:
+            weak_categories.append(score.name)
+
+    jd_text_lower = job_description.raw_text.lower()
+    for phrase in template.red_flag_phrases:
+        if phrase.lower() in jd_text_lower:
+            red_flags.append(f"Job description contains flagged phrase: '{phrase}'")
 
     if red_flags or g_force_score < MATCH_CRITICAL_SCORE:
         alert_level = AlertLevel.CRITICAL
-    elif gaps or g_force_score < MATCH_WARNING_SCORE:
+    elif gaps or weak_categories or g_force_score < MATCH_WARNING_SCORE:
         alert_level = AlertLevel.WARNING
     else:
         alert_level = AlertLevel.SUCCESS
@@ -165,5 +184,6 @@ def run_match(dossier: Dossier, job_description: JobDescription, template: Missi
         category_scores=tuple(category_scores),
         gaps=tuple(sorted(gaps)),
         red_flags=tuple(red_flags),
+        weak_categories=tuple(weak_categories),
         alert_level=alert_level,
     )

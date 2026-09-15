@@ -20,7 +20,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import LETTER
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import Flowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from questvector.core.models import Dossier, MatchResult
 from questvector.exceptions import ExportError
@@ -113,7 +113,7 @@ def _export_pdf(
     body_style = styles["BodyText"]
     title_style = ParagraphStyle("DossierTitle", parent=styles["Title"], spaceAfter=12)
 
-    story: list[object] = [Paragraph(title, title_style)]
+    story: list[Flowable] = [Paragraph(title, title_style)]
 
     if narrative:
         story.append(Paragraph("Summary", heading_style))

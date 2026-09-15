@@ -1,5 +1,12 @@
-id: sr-data-engineer
-title: Senior / Principal Data Engineer
+schema_version: "1.0"
+mission_id: sr-data-engineer
+metadata:
+  title: Senior / Principal Data Engineer
+  author: QuestVector Core
+  version: "1.0.0"
+  description: Starter template for senior/principal data engineering roles.
+  tags: [data-engineering]
+
 categories:
   - name: data_pipelines
     weight: 0.30
@@ -16,3 +23,12 @@ categories:
   - name: data_governance
     weight: 0.10
     keywords: [governance, quality, lineage, compliance, security]
+
+jd_analysis:
+  gap_coverage_threshold: 0.5
+  red_flag_phrases:
+    - "must know 10+ languages"
+
+output_formatting:
+  target_page_budget: 2
+  tone_style: executive-tactical

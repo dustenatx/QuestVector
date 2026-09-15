@@ -14,29 +14,30 @@ cd questvector
 ```
 
 ### 2. Copy the Boilerplate
-Create a new `.yaml` file inside the `templates/community/` directory using our starter template:
+Create a new `.qv-mission.yaml` file inside the `templates/community/` directory using the boilerplate below:
 ```bash
-cp templates/boilerplate.yaml templates/community/sr-cloud-architect.yaml
+cp templates/boilerplate.qv-mission.yaml templates/community/sr-cloud-architect.qv-mission.yaml
 ```
 
 ### 3. Build & Validate
-Edit your YAML file with your domain-specific keyword banks, narrative weightings, and metric triggers. Then, run the local validation check:
+Edit your YAML file with your domain-specific keyword banks and category weightings. Then run the local validation check (the Python build's `qv` CLI, or the Web Cockpit's in-browser validator):
 ```bash
-qv template validate templates/community/sr-cloud-architect.yaml
+qv template validate templates/community/sr-cloud-architect.qv-mission.yaml
 ```
-> **Note:** The validator checks YAML syntax, verifies required fields, and ensures your narrative weightings equal **100% (1.00)**.
+> **Note:** The validator checks YAML syntax, verifies required fields, and ensures your `categories` weightings sum to **100% (1.00)**. Add `--fix` to have it rescale your weights automatically.
 
 ### 4. Open Your Pull Request
-Commit your changes, push to your fork, and submit a Pull Request to `main` with a title like:  
+Commit your changes, push to your fork, and submit a Pull Request to `main` with a title like:
 `feat(templates): add Senior Cloud Architect mission template`
 
 ---
 
-## 📋 Template Boilerplate (`templates/boilerplate.yaml`)
+## 📋 Template Boilerplate (`templates/boilerplate.qv-mission.yaml`)
 
 ```yaml
 schema_version: "1.0"
 mission_id: "your-role-id" # e.g., sr-cloud-architect
+
 metadata:
   title: "Your Target Role Title"
   author: "Your GitHub Username or Name"
@@ -44,26 +45,33 @@ metadata:
   description: "A brief summary of who this template is for and what career strategies it emphasizes."
   tags: ["cloud", "architecture", "leadership"]
 
-jd_analysis_rules:
-  priority_keywords:
-    - "Primary Skill 1"
-    - "Primary Skill 2"
-    - "Core Domain Standard"
-  gap_detection_threshold: 0.75
-  red_flags:
-    - "unrealistic requirement 1"
+# Weighted JD-matching dimensions for this role. Each category's keywords
+# are checked against both the target job description and the candidate's
+# dossier; "weight" controls how much that category contributes to the
+# overall G-Force match score. All weights must sum to 1.00.
+categories:
+  - name: "primary_domain"
+    weight: 0.40
+    keywords: ["Primary Skill 1", "Primary Skill 2", "Core Domain Standard"]
+  - name: "leadership"
+    weight: 0.30
+    keywords: ["mentoring", "budget", "stakeholders"]
+  - name: "secondary_domain"
+    weight: 0.30
+    keywords: ["Adjacent Skill 1", "Adjacent Skill 2"]
+  # Total across all categories must sum to 1.00
+
+# Optional: JD-side red flags and per-category gap sensitivity.
+jd_analysis:
+  gap_coverage_threshold: 0.5   # a category scoring below this is flagged as "weak," even if no single keyword is fully missing
+  red_flag_phrases:             # literal phrases to flag if found verbatim in the JD text
+    - "unrealistic requirement"
     - "vague job scope"
 
-narrative_weighting:
-  capabilities: 0.40   # Technical skills weight (0.00 - 1.00)
-  chronology: 0.35     # Career progression weight (0.00 - 1.00)
-  impact_stories: 0.25 # STAR narrative wins weight (0.00 - 1.00)
-  # Total must sum to 1.00
-
+# Optional: hints for exported bundles and LLM-generated narrative text.
 output_formatting:
   target_page_budget: 2
   tone_style: "executive-tactical"
-  cover_letter_template: "modular-assembler-v1"
 ```
 
 ---
