@@ -1,6 +1,6 @@
 # 🚀 QuestVector
 ### *This is a proof of concept project which has never been tested. Use at your own risk*
-### *Command your job search with a local-only, privacy-first career flight deck. Deconstruct JDs, track applications, and own your career data.*
+### *Command your job search with a local-only, privacy-first career flight deck. Score your career history against job descriptions, find the gaps, and own your career data.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING_TEMPLATES.md)
@@ -13,7 +13,7 @@ This repo describes **two** implementations of the QuestVector concept, but only
 
 | | Python Desktop (this build) | Web Cockpit |
 |---|---|---|
-| **Status** | ✅ Implemented, tested, runs today | 🚧 Design target only — no code exists yet |
+| **Status** | ✅ Implemented and runs today; unit-tested with simulated AI providers, not yet against a live one | 🚧 Design target only — no code exists yet |
 | Stack | Pure Python core + `qv` CLI + pywebview shell | React/Tailwind UI + Rust-compiled Wasm core (planned) |
 | Distribution | Clone/`pip install` and run locally | Will clone & run locally when built (see [Roadmap](#-roadmap-web-cockpit-not-yet-built) below) |
 | Storage | Local filesystem + AES-256-GCM encrypted vault file | File System Access API + IndexedDB (planned) |
@@ -54,11 +54,23 @@ qv vault set-key --provider anthropic --dir ~/career-workspace   # store a provi
 python -m questvector.desktop.app   # native HUD window (requires a display)
 ```
 
+### Fill in your dossier first
+`qv launch` creates three stub files in the workspace. Until you replace their contents with your own history, every match scores 0% (CRITICAL), because there is nothing to match against. Each file uses the same small Markdown format: `## ` headings, each followed by `- ` bullets. Other heading levels and blank lines are ignored.
+
+| File | Each `##` heading is | Bullets hold |
+|---|---|---|
+| `Capabilities.md` | a skill domain, e.g. `## Cloud Infrastructure` | skills and tools in that domain |
+| `Chronology.md` | a role, e.g. `## Acme Corp — Senior SRE Manager (2019–2024)` | responsibilities and achievements |
+| `Impact.md` | a grouping, e.g. `## Cost Reduction` | quantified results |
+
+Matching is by keyword, so use the terms a job description would use (for example, both "Kubernetes" and "K8s" if you have used both names).
+
 ### Tests
 ```bash
 pytest                                          # 142 tests
 pytest --cov=questvector --cov-report=term-missing
 ```
+13 of the tests exercise the cloud AI providers and need their SDKs installed (`[llm]`); without them those tests fail rather than skip. Linting, type checks, and the full contributor workflow are in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Version
 ```bash
@@ -109,7 +121,16 @@ Exact build/run commands will be added here once this implementation actually ex
 ---
 
 ## 📄 Documentation
-`docs/QuestVector_Spec.pdf` is the system specification for the Python build as it exists today: architecture, CLI reference, template schema, matching engine, and the LLM subsystem. `docs/QuestVector - The AI Capability Ladder.mp4` is a video overview of the project.
+| Document | What it covers |
+|---|---|
+| [`docs/PRD.md`](docs/PRD.md) | Product requirements: goals, non-goals, and each requirement marked built or planned |
+| `docs/QuestVector_Spec.pdf` | System specification for the Python build as it exists today: architecture, CLI reference, template schema, matching engine, LLM subsystem |
+| [`docs/decisions/`](docs/decisions/) | Decisions log: why the project is built the way it is |
+| [`CHANGELOG.md`](CHANGELOG.md) | What changed in each version |
+| [`docs/BACKLOG.md`](docs/BACKLOG.md) | Planned work |
+| [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Developer setup, checks, and how to submit a change |
+| [`CONTRIBUTING_TEMPLATES.md`](CONTRIBUTING_TEMPLATES.md) | How to write and submit a mission template |
+| `docs/QuestVector - The AI Capability Ladder.mp4` | Video overview of the project |
 
 ---
 

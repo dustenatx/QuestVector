@@ -22,6 +22,10 @@ record in [`docs/decisions/`](docs/decisions/).
   the video overview.
 - `docs/BACKLOG.md` with planned work from the 15 Oct 2026 review.
 - This changelog and the decisions log in `docs/decisions/`.
+- `docs/PRD.md`, the first product requirements document (draft 0.1).
+- `docs/DEVELOPMENT.md`: developer setup, checks, conventions, and the release steps.
+- README "Fill in your dossier first" section explaining the dossier format, and a documentation index.
+- mypy, pyflakes, and the type stubs mypy needs (`types-PyYAML`, `types-reportlab`) in the `[dev]` extra, so the spec's "mypy clean" claim can be reproduced.
 
 ### Changed
 - Template-validation workflow rewritten for the Python build: installs with
@@ -32,6 +36,8 @@ record in [`docs/decisions/`](docs/decisions/).
   in the Actions run summary; the workflow token is now read-only and the
   check works on pull requests from forks.
   ([ADR-0008](docs/decisions/0008-ci-results-in-run-summary.md))
+- README tagline no longer promises application tracking, which doesn't exist; the status table now says testing used simulated AI providers.
+- Contributing guide and issue templates no longer refer to the unbuilt Web Cockpit as usable.
 - README clarifies that `MASTER_DEVELOPER_SPEC.pdf`, cited by the code's
   "Spec reference" notes, is the original design spec and is not in the repo.
 

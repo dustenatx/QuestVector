@@ -31,6 +31,11 @@ or drift. Known starting points:
   migration for existing vaults (see ADR-0002).
 - **LLM data flow.** Confirm exactly what dossier content is sent to remote
   providers and that the user sees it before it leaves the machine.
+- **Keyword normalization in matching.** Found 15 Oct: the tokenizer turns
+  "CI/CD" in a job description into `ci/cd`, but the DevOps starter template's
+  keyword is `cicd`, so they never match. Similar risks: "SOC 2" vs `soc2`,
+  "K8s" vs `kubernetes`. Review tokenizer normalization and the starter
+  templates' keyword forms together; add tests for common variants.
 - **Spec traceability.** Code cites `MASTER_DEVELOPER_SPEC.pdf` section numbers;
   that file isn't in the repo. Decide whether to add it, or re-point citations
   to `docs/QuestVector_Spec.pdf`.
@@ -117,6 +122,7 @@ This becomes the zero-cost, fully private path for real testing, and is the
 fourth provider's first real-world use.
 
 ## 10. Documentation, decisions log, PRD, and changelog
+✅ Complete 15 Oct 2026, except the PRD, which is a draft awaiting owner review.
 Bring the project's written record up to the standard used for risk-trainer,
 whose PRD and status docs live in the Applying for Jobs project
 (`claude/risk-trainer-prd.md`, `claude/risk-trainer-status.md`) and can serve
@@ -137,7 +143,10 @@ as models.
 - **Changelog.** ✅ Done 15 Oct 2026. Original scope: add `CHANGELOG.md` in the Keep a Changelog format, tied to
   `questvector.__version__`, with backfilled entries from the git history and
   a convention for keeping it current on every merge.
-- **Documentation review.** Check the README, contributing guide, spec, and
+- **Documentation review.** ✅ Done 15 Oct 2026: README, contributing guide,
+  issue templates, and dev extras fixed; `docs/DEVELOPMENT.md` added; every
+  Quickstart command run and confirmed working. A separate user guide was not
+  needed yet; the README's dossier section covers it. Original scope: check the README, contributing guide, spec, and
   module docstrings against the code; consider a `docs/` index, a user guide
   separate from the README, and a developer setup guide.
 
