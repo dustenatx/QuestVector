@@ -11,8 +11,11 @@ or drift. Known starting points:
   `fix/ci-and-repo-hygiene`. Check for other leftovers of the old schema
   (`narrative_weighting`, `jd_analysis_rules`) and decide whether the
   backward-compatibility path in `questvector/core/templates.py` is still needed.
-- **README contradicts itself.** The banner says the project "has never been
-  tested"; the status table says "Implemented, tested, runs today."
+- **README wording on testing.** The banner says the project "has never been
+  tested"; the status table says "Implemented, tested, runs today." Both are
+  partly true: the code is unit-tested with mocked AI providers, but narrative
+  generation has never run against a live provider, because paid API access
+  wasn't an option. Reword both to say exactly that. Items 8 and 9 close the gap.
 - **Vault.** Review key derivation, file permissions, and how the passphrase or
   key is supplied (`questvector/core/vault.py`).
 - **LLM data flow.** Confirm exactly what dossier content is sent to remote
@@ -67,7 +70,35 @@ coverage thresholds, `ruff` linting and formatting, `mypy` type checking,
 pre-commit hooks, and `pip-audit` for dependency vulnerabilities. The app
 runs locally, but these improve quality without changing that.
 
-## 7. Further topics to discuss
+## 8. Live-test narrative generation through an API at no cost
+The 13 provider tests use mocked clients; no real API call has ever been
+made. Find a no-cost way to run end-to-end tests against a real remote
+provider. Options to research (verify current terms before relying on any):
+- A free tier from one of the three supported providers, such as Google
+  AI Studio's Gemini API, which has offered free-tier access.
+- Free tiers or free models on services with OpenAI-compatible APIs, which
+  might work through the existing `openai` provider with a custom base URL.
+  Check whether `questvector/core/llm.py` supports a base-URL override.
+Constraints: no payment method on file if it can be avoided, stay within
+free-tier rate limits, and send only synthetic test data, never the real
+dossier, since free tiers may use inputs for training. Deliverable: an opt-in
+live test (skipped by default, for example behind an environment variable)
+and a short how-to.
+
+## 9. Install and configure a local LLM (Ollama) for learning and testing
+Set up Ollama on the Mac and choose a model that suits this project: drafting
+a short, accurate resume summary from dossier text. Goals:
+- Learn how a local model is installed, pulled, served, and called.
+- Pick a model size the machine's memory can run comfortably; compare two or
+  three candidates on the same prompt for accuracy and invented facts.
+- Configure QuestVector with `qv vault set-key --provider ollama`, then run
+  narrative generation end to end with the real dossier, which never leaves
+  the machine.
+- Add an opt-in live test against the local server and document the setup.
+This becomes the zero-cost, fully private path for real testing, and is the
+fourth provider's first real-world use.
+
+## 10. Further topics to discuss
 - Release and versioning: tagged releases, a changelog, and how users get
   updates without a hosted service.
 - Packaging and install experience across macOS, Windows, and Linux
