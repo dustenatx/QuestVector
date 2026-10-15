@@ -1,0 +1,37 @@
+schema_version: "1.0"
+mission_id: "your-role-id" # e.g., sr-cloud-architect
+
+metadata:
+  title: "Your Target Role Title"
+  author: "Your GitHub Username or Name"
+  version: "1.0.0"
+  description: "A brief summary of who this template is for and what career strategies it emphasizes."
+  tags: ["cloud", "architecture", "leadership"]
+
+# Weighted JD-matching dimensions for this role. Each category's keywords
+# are checked against both the target job description and the candidate's
+# dossier; "weight" controls how much that category contributes to the
+# overall G-Force match score. All weights must sum to 1.00.
+categories:
+  - name: "primary_domain"
+    weight: 0.40
+    keywords: ["Primary Skill 1", "Primary Skill 2", "Core Domain Standard"]
+  - name: "leadership"
+    weight: 0.30
+    keywords: ["mentoring", "budget", "stakeholders"]
+  - name: "secondary_domain"
+    weight: 0.30
+    keywords: ["Adjacent Skill 1", "Adjacent Skill 2"]
+  # Total across all categories must sum to 1.00
+
+# Optional: JD-side red flags and per-category gap sensitivity.
+jd_analysis:
+  gap_coverage_threshold: 0.5   # a category scoring below this is flagged as "weak," even if no single keyword is fully missing
+  red_flag_phrases:             # literal phrases to flag if found verbatim in the JD text
+    - "unrealistic requirement"
+    - "vague job scope"
+
+# Optional: hints for exported bundles and LLM-generated narrative text.
+output_formatting:
+  target_page_budget: 2
+  tone_style: "executive-tactical"

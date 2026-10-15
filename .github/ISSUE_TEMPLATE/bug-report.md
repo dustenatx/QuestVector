@@ -1,6 +1,6 @@
 ---
 name: 🐛 Bug Report
-about: Report a bug or issue in the QuestVector CLI or Web Cockpit
+about: Report a bug in the QuestVector CLI or desktop app
 title: '[BUG]: '
 labels: ['bug', 'triage']
 assignees: ''
@@ -11,9 +11,10 @@ A clear and concise description of what the bug is.
 
 ### 💻 Environment
 - **OS:** (e.g., macOS, Ubuntu, Windows)
-- **Interface:** (Web Cockpit / CLI Terminal)
-- **Browser (if Web):** (e.g., Chrome, Firefox, Safari)
-- **QuestVector Version:** (e.g., v1.0.0)
+- **Interface:** (CLI / desktop app)
+- **Python version:** (output of `python --version`)
+- **AI provider, if relevant:** (anthropic / openai / gemini / ollama)
+- **QuestVector Version:** (output of `qv --version`)
 
 ### 🐾 Steps to Reproduce
 1. Go to '...'

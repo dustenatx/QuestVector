@@ -1,6 +1,6 @@
 ---
 name: 💡 Feature Request
-about: Suggest a new feature, CLI command, or Web Cockpit widget for QuestVector
+about: Suggest a new feature, CLI command, or desktop app improvement for QuestVector
 title: '[FEATURE]: '
 labels: ['enhancement', 'flight-deck']
 assignees: ''

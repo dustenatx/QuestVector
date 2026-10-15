@@ -20,14 +20,14 @@ cp templates/boilerplate.qv-mission.yaml templates/community/sr-cloud-architect.
 ```
 
 ### 3. Build & Validate
-Edit your YAML file with your domain-specific keyword banks and category weightings. Then run the local validation check (the Python build's `qv` CLI, or the Web Cockpit's in-browser validator):
+Edit your YAML file with your domain-specific keyword banks and category weightings. Then run the local validation check with the `qv` CLI (see the README's Quickstart to install it):
 ```bash
 qv template validate templates/community/sr-cloud-architect.qv-mission.yaml
 ```
 > **Note:** The validator checks YAML syntax, verifies required fields, and ensures your `categories` weightings sum to **100% (1.00)**. Add `--fix` to have it rescale your weights automatically.
 
 ### 4. Open Your Pull Request
-Commit your changes, push to your fork, and submit a Pull Request to `main` with a title like:
+Commit your changes, push to your fork, and submit a Pull Request to `main`. A GitHub Actions check validates every template under `templates/` and shows the results in the run summary on the pull request's Checks tab. Use a title like:
 `feat(templates): add Senior Cloud Architect mission template`
 
 ---
