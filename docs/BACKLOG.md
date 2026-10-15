@@ -43,10 +43,13 @@ Semgrep, secret scanning with push protection, and pinning actions to commit
 SHAs.
 
 ## 3. Fix spec Section 10.2
-`docs/QuestVector_Spec.pdf` Section 10.2 (repository source layout) likely
-still shows the removed `templates/starter/*.yaml` files and
-`templates/boilerplate.yaml`. Regenerate the PDF from its source with the
-current layout.
+Correction (15 Oct): Section 10.2 never listed the old `templates/` files.
+Its real gaps are omissions. The repository layout it shows leaves out
+`templates/` (boilerplate and `community/`), `.github/` (issue templates and
+the workflow), and now `CHANGELOG.md`, `docs/PRD.md`, `docs/BACKLOG.md`, and
+`docs/decisions/`. Regenerate the PDF from its source with the current
+layout, and check Section 11's quality claims (mypy and pyflakes clean) at
+the same time, since CI doesn't verify them yet.
 
 ## 4. Unit tests: CI and optional-extras failures
 - The 142 tests never run in CI; only template validation does. Add a
@@ -81,6 +84,10 @@ coverage thresholds, `ruff` linting and formatting, `mypy` type checking,
 pre-commit hooks, and `pip-audit` for dependency vulnerabilities. The app
 runs locally, but these improve quality without changing that.
 
+## 7. Moved
+Originally "Further topics to discuss"; now item 11. Numbers are kept
+stable so references elsewhere stay valid.
+
 ## 8. Live-test narrative generation through an API at no cost
 The 13 provider tests use mocked clients; no real API call has ever been
 made. Find a no-cost way to run end-to-end tests against a real remote
@@ -114,7 +121,8 @@ Bring the project's written record up to the standard used for risk-trainer,
 whose PRD and status docs live in the Applying for Jobs project
 (`claude/risk-trainer-prd.md`, `claude/risk-trainer-status.md`) and can serve
 as models.
-- **PRD.** Write a product requirements document: problem, target user,
+- **PRD.** ✅ First draft 15 Oct 2026: `docs/PRD.md` (version 0.1, for owner
+  review). Original scope: write a product requirements document: problem, target user,
   goals and non-goals (including the local-only distribution policy), feature
   requirements with acceptance criteria, and open questions. Reconcile it with
   the original design spec and `docs/QuestVector_Spec.pdf` so the three don't
@@ -145,3 +153,27 @@ as models.
 - Remaining issue templates and the contributing guide, now that CI works.
 - Whether the Web Cockpit roadmap stays in the README or moves to its own
   document.
+
+## 12. "New things learned" document
+QuestVector was the owner's first vibe-coding project, and it introduced
+many other practices along the way. Write `docs/LEARNED.md` recording what
+was new and what each taught. Walk through it together first: review the
+commit history, decisions log, and this backlog to identify what was done
+before versus new. Candidate topics: AI-directed development with Gemini and
+Claude, Python packaging and optional extras, encrypted storage and key
+derivation, GitHub Actions, Dependabot, ADRs, Keep a Changelog, and local LLMs.
+Useful as interview material and for the instructor pivot.
+
+## 13. Vault hardening
+Separate from the broader vault review in item 1.
+- Raise key derivation to current OWASP guidance: PBKDF2-HMAC-SHA256 at
+  600,000 iterations or more (now 390,000), or move to scrypt or Argon2.
+  Record the choice as a new ADR.
+- Store the KDF parameters in the vault file so future changes don't break
+  old vaults, and re-encrypt older vaults on next save without re-entering
+  keys (PRD R17).
+- Add a test confirming keys never appear in command output, error messages,
+  or exported bundles.
+- Review how the passphrase is entered (no echo, no shell history) and what
+  happens on Windows, where file permissions are best-effort.
+
