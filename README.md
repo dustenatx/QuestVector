@@ -93,7 +93,7 @@ qv --version                                    # reads questvector.__version__ 
 
 ## 🗺️ Roadmap: Web Cockpit (not yet built)
 
-**Short answer: yes, it will run locally — the same as the Python build, just not written yet.** Nothing below this line exists as code today; this section documents the *design target* from `MASTER_DEVELOPER_SPEC.pdf` and the constraint it must be built under. Do not trust any `questvector.dev` URL, `npx questvector`, or `npm install questvector` command as real; none of them exist, and none ever will — see the distribution policy above.
+**Short answer: yes, it will run locally — the same as the Python build, just not written yet.** Nothing below this line exists as code today; this section documents the *design target* from the original design spec (`MASTER_DEVELOPER_SPEC.pdf`, not included in this repo; the code's "Spec reference" notes cite its section numbers) and the constraint it must be built under. Do not trust any `questvector.dev` URL, `npx questvector`, or `npm install questvector` command as real; none of them exist, and none ever will — see the distribution policy above.
 
 **Planned stack:** React/Tailwind UI + a Rust-compiled Wasm core, using the browser's File System Access API and IndexedDB for local storage — no server component.
 
@@ -108,7 +108,12 @@ Exact build/run commands will be added here once this implementation actually ex
 
 ---
 
+## 📄 Documentation
+`docs/QuestVector_Spec.pdf` is the system specification for the Python build as it exists today: architecture, CLI reference, template schema, matching engine, and the LLM subsystem. `docs/QuestVector - The AI Capability Ladder.mp4` is a video overview of the project.
+
+---
+
 ## 🤝 Contributing
-Interested in building or submitting custom `.qv-mission.yaml` templates? Check out our [Community Template Contribution Guide](CONTRIBUTING_TEMPLATES.md). Templates go in `templates/community/`; built-in ones ship in `templates/starter/`. The schema in that guide and the one `questvector/core/templates.py` validates against have been reconciled into one — see that module's docstring for the full merge notes.
+Interested in building or submitting custom `.qv-mission.yaml` templates? Check out our [Community Template Contribution Guide](CONTRIBUTING_TEMPLATES.md). Contributed templates go in `templates/community/`, starting from `templates/boilerplate.qv-mission.yaml`. The seven built-in starters ship inside the package (`questvector/data/starter_templates/`), and `qv launch` copies them into each workspace's `templates/starter/` folder. A GitHub Actions check validates every template under `templates/` on each pull request. The schema in that guide and the one `questvector/core/templates.py` validates against have been reconciled into one — see that module's docstring for the full merge notes.
 
 License: [MIT](LICENSE)
