@@ -26,7 +26,9 @@ or drift. Known starting points:
   in step: update the "published as a proof of concept" project line only
   after reviewing it in the Applying for Jobs project.
 - **Vault.** Review key derivation, file permissions, and how the passphrase or
-  key is supplied (`questvector/core/vault.py`).
+  key is supplied (`questvector/core/vault.py`). Known: PBKDF2-HMAC-SHA256 runs
+  390,000 iterations; OWASP's current guidance is 600,000. Raising it needs a
+  migration for existing vaults (see ADR-0002).
 - **LLM data flow.** Confirm exactly what dossier content is sent to remote
   providers and that the user sees it before it leaves the machine.
 - **Spec traceability.** Code cites `MASTER_DEVELOPER_SPEC.pdf` section numbers;
@@ -117,13 +119,14 @@ as models.
   requirements with acceptance criteria, and open questions. Reconcile it with
   the original design spec and `docs/QuestVector_Spec.pdf` so the three don't
   contradict each other.
-- **Decisions log.** Start `docs/decisions/` with short architecture decision
+- **Decisions log.** ✅ Done 15 Oct 2026: `docs/decisions/` holds ten records.
+  Original scope: start `docs/decisions/` with short architecture decision
   records. Backfill the decisions already made: local-only with no hosted
   service; the AES-256-GCM vault; the reconciled template schema; the
   data-driven provider registry; Ollama over plain HTTP with no SDK; the G-Force
   formula defined independently of the spec; templates validated in full
   rather than by diff in CI; results in the run summary rather than a PR comment.
-- **Changelog.** Add `CHANGELOG.md` in the Keep a Changelog format, tied to
+- **Changelog.** ✅ Done 15 Oct 2026. Original scope: add `CHANGELOG.md` in the Keep a Changelog format, tied to
   `questvector.__version__`, with backfilled entries from the git history and
   a convention for keeping it current on every merge.
 - **Documentation review.** Check the README, contributing guide, spec, and
