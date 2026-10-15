@@ -16,6 +16,15 @@ or drift. Known starting points:
   partly true: the code is unit-tested with mocked AI providers, but narrative
   generation has never run against a live provider, because paid API access
   wasn't an option. Reword both to say exactly that. Items 8 and 9 close the gap.
+- **Exit condition (agreed 15 Oct):** once items 8 and 9 pass, remove "never
+  been tested" everywhere: the README banner, status table, and
+  `docs/QuestVector_Spec.pdf`. Replace it with what was actually verified,
+  naming the providers tested live (for example Gemini and a local Ollama
+  model). Providers still tested only with mocks stay labeled that way. Keep
+  "proof of concept" until the tool has been used in a real job search;
+  passing tests aren't real-world use. Resume and dossier wording should change
+  in step: update the "published as a proof of concept" project line only
+  after reviewing it in the Applying for Jobs project.
 - **Vault.** Review key derivation, file permissions, and how the passphrase or
   key is supplied (`questvector/core/vault.py`).
 - **LLM data flow.** Confirm exactly what dossier content is sent to remote
