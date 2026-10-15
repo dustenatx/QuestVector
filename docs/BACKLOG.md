@@ -107,9 +107,32 @@ a short, accurate resume summary from dossier text. Goals:
 This becomes the zero-cost, fully private path for real testing, and is the
 fourth provider's first real-world use.
 
-## 10. Further topics to discuss
-- Release and versioning: tagged releases, a changelog, and how users get
-  updates without a hosted service.
+## 10. Documentation, decisions log, PRD, and changelog
+Bring the project's written record up to the standard used for risk-trainer,
+whose PRD and status docs live in the Applying for Jobs project
+(`claude/risk-trainer-prd.md`, `claude/risk-trainer-status.md`) and can serve
+as models.
+- **PRD.** Write a product requirements document: problem, target user,
+  goals and non-goals (including the local-only distribution policy), feature
+  requirements with acceptance criteria, and open questions. Reconcile it with
+  the original design spec and `docs/QuestVector_Spec.pdf` so the three don't
+  contradict each other.
+- **Decisions log.** Start `docs/decisions/` with short architecture decision
+  records. Backfill the decisions already made: local-only with no hosted
+  service; the AES-256-GCM vault; the reconciled template schema; the
+  data-driven provider registry; Ollama over plain HTTP with no SDK; the G-Force
+  formula defined independently of the spec; templates validated in full
+  rather than by diff in CI; results in the run summary rather than a PR comment.
+- **Changelog.** Add `CHANGELOG.md` in the Keep a Changelog format, tied to
+  `questvector.__version__`, with backfilled entries from the git history and
+  a convention for keeping it current on every merge.
+- **Documentation review.** Check the README, contributing guide, spec, and
+  module docstrings against the code; consider a `docs/` index, a user guide
+  separate from the README, and a developer setup guide.
+
+## 11. Further topics to discuss
+- Release and versioning: tagged releases tied to the changelog (item 10),
+  and how users get updates without a hosted service.
 - Packaging and install experience across macOS, Windows, and Linux
   (pywebview's platform dependencies; Python 3.12+ requirement).
 - Privacy documentation: a short threat model for local data and the vault.
