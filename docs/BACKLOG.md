@@ -186,3 +186,45 @@ Separate from the broader vault review in item 1.
 - Review how the passphrase is entered (no echo, no shell history) and what
   happens on Windows, where file permissions are best-effort.
 
+## 14. Discuss desktop-style use hosted on AWS
+Discussion item, not yet a decision. Explore running QuestVector on AWS so it
+can be used from any device rather than only from a local install.
+
+**Conflicts with an accepted decision.** ADR-0001 says nothing is hosted or
+published externally, ever, and the README and spec repeat it. Any hosted
+option needs a new ADR that supersedes or narrows ADR-0001, and the README,
+spec, and PRD non-goals updated to match.
+
+Options to compare:
+- **Private, single-user deployment in the owner's own AWS account.** The
+  closest fit to the local-first intent: the owner is still the only person
+  with the data. Variants:
+  - The existing desktop web UI served as a web app (Lambda behind
+    CloudFront, as in risk-trainer), with the Python bridge calls becoming
+    API calls.
+  - The desktop app itself on a cloud desktop (an EC2 instance with remote
+    display, or Amazon WorkSpaces). Least code change; likely not free.
+- **Self-host kit for other users.** Terraform others deploy into their own
+  AWS accounts, so each user keeps their own data. Keeps the spirit of
+  ADR-0001 (no shared service holding anyone else's data).
+- **Shared multi-user service.** Accounts, tenant isolation, and holding
+  other people's career data. The largest change in scope, risk, and cost;
+  likely out of scope.
+
+Questions to settle:
+- **Data storage.** Where the dossier and bundles live (S3 with encryption),
+  and whether a user can still edit plain Markdown files.
+- **Secrets.** The vault's replacement: SSM Parameter Store SecureString or
+  Secrets Manager, and whether the passphrase model still applies.
+- **Authentication.** Even a single-user deployment needs sign-in so the
+  dossier isn't public.
+- **Local AI.** Ollama needs compute that the always-free tier doesn't
+  provide, so the $0 local-model path (item 9) would stay desktop-only.
+- **Cost.** Can it stay at $0 within always-free limits, as risk-trainer
+  does? Verify current AWS free-tier terms before deciding.
+- **Security baseline.** Reuse risk-trainer's controls: least-privilege IAM,
+  OIDC deploys with an approval gate, WAF and rate limits, budget alarms.
+
+Career relevance: an AWS-hosted variant would show AWS architecture,
+Terraform, and security design on a second project, alongside risk-trainer.
+
