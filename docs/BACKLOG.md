@@ -228,3 +228,39 @@ Questions to settle:
 Career relevance: an AWS-hosted variant would show AWS architecture,
 Terraform, and security design on a second project, alongside risk-trainer.
 
+## 15. UI/UX consistency with risk-trainer
+Review the desktop app's interface so it is consistent with risk-trainer and
+offers comparable features, adapted to a desktop app rather than a website.
+
+Starting facts (quick scan, 16 Oct): the interface is about 550 lines of
+plain HTML, CSS, and JavaScript in `questvector/desktop/web/`, themed as the
+"Tactical Ops Flight Deck" HUD. It already loads no external scripts or
+inline scripts. It has one ARIA attribute, no visible focus styles, no
+responsive layout rules, and no light/dark handling.
+
+Compare against risk-trainer's PRD requirements and look:
+- **Accessibility:** WCAG 2.2 AA target, labels on every input, visible
+  focus, keyboard-only use, color never the only signal. The G-Force gauge
+  and alert colors need a text equivalent.
+- **Layout:** usable at small window sizes (risk-trainer targets 360 px).
+- **Help and reference content:** risk-trainer has About, Privacy, and a
+  reference page. QuestVector equivalents: a short first-run explanation, a
+  page explaining the score (PRD R5), the dossier format, and a privacy page
+  stating what stays local and what a remote AI provider receives (PRD R13).
+- **Result presentation:** risk-trainer's debrief explains each result.
+  Apply the same to a match: why each category scored as it did, which
+  keywords matched, and what to add to the dossier.
+- **Errors:** plain-language messages; no stack traces shown.
+- **Content Security Policy:** risk-trainer enforces a strict CSP with no
+  inline scripts; set the same in `index.html`.
+- **Visual identity:** decide whether QuestVector keeps the HUD theme,
+  adopts risk-trainer's design, or both share a small common design system
+  (colors, type, spacing, components). Record the choice as an ADR.
+- **Terminology:** the HUD vocabulary ("Sync-AST," "Lock-On Red,"
+  "Afterburner Amber," "G-Force") may confuse new users. Consider plain
+  labels with the themed names secondary.
+
+Needs risk-trainer's front-end code (templates and CSS), not just its PRD,
+for a side-by-side comparison. Pairs with PRD R19 (Playwright tests for each
+tab) and backlog item 6.
+
