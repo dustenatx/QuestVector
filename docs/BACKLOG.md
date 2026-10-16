@@ -253,12 +253,14 @@ Compare against risk-trainer's PRD requirements and look:
 - **Errors:** plain-language messages; no stack traces shown.
 - **Content Security Policy:** risk-trainer enforces a strict CSP with no
   inline scripts; set the same in `index.html`.
-- **Visual identity:** decide whether QuestVector keeps the HUD theme,
-  adopts risk-trainer's design, or both share a small common design system
-  (colors, type, spacing, components). Record the choice as an ADR.
-- **Terminology:** the HUD vocabulary ("Sync-AST," "Lock-On Red,"
-  "Afterburner Amber," "G-Force") may confuse new users. Consider plain
-  labels with the themed names secondary.
+- **Visual identity:** decided 16 Oct: keep the Flight Deck look, and share
+  conventions with risk-trainer where they make sense (accessibility,
+  layout behavior, help pages, error handling, CSP), not its visual design.
+  Record this as an ADR when the work starts.
+- **Terminology (undecided, review later):** the HUD vocabulary
+  ("Sync-AST," "Lock-On Red," "Afterburner Amber," "G-Force") may confuse
+  new users. Make quick mockups of two or three labeling options (themed
+  only, plain only, plain with themed names secondary) and decide from them.
 
 Needs risk-trainer's front-end code (templates and CSS), not just its PRD,
 for a side-by-side comparison. Pairs with PRD R19 (Playwright tests for each
