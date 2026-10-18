@@ -17,7 +17,7 @@ record in [`docs/decisions/`](docs/decisions/).
 - `Security` GitHub Actions workflow: gitleaks (git history), Semgrep (static analysis), and pip-audit (dependency vulnerabilities) on every pull request and push to `main`; gitleaks and Semgrep results also go to the Security tab. ([ADR-0011](docs/decisions/0011-github-security-baseline.md))
 - `.github/dependabot.yml`: weekly version updates for pip and GitHub Actions, with a 7-day cooldown.
 - `SECURITY.md`: how to report a vulnerability privately.
-- `.github/rulesets/main.json`: the `main` branch ruleset (squash-only pull requests, required checks, no bypass), kept in the repo so changes are reviewed; and a `CLAUDE.md` rule that a CI job can't be renamed without updating it in the same pull request.
+- `.github/rulesets/main.json`: the `main` branch ruleset (squash-only pull requests, required checks, no bypass), kept in the repo so changes are reviewed, and matching the live ruleset field for field, including the defaults GitHub fills in; and a `CLAUDE.md` rule that a CI job can't be renamed without updating it in the same pull request.
 - `Tests` GitHub Actions workflow: pytest with coverage on Python 3.12 and 3.13, a run without the AI extras, and mypy plus pyflakes, on every pull request and push to `main`.
 - 90% line-coverage floor in `pyproject.toml` (measured 95%).
 - `CLAUDE.md` with project rules for AI-assisted development.
