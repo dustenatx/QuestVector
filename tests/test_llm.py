@@ -7,6 +7,7 @@ network call or requires a running Ollama server.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import sys
 import urllib.error
@@ -27,6 +28,32 @@ from questvector.core.llm import (
 )
 from questvector.exceptions import LLMError
 
+
+def _sdk_installed(module: str) -> bool:
+    """Return True if ``module`` can be imported, without importing it.
+
+    ``find_spec`` raises for a dotted name whose parent package is missing
+    (``google.genai`` without ``google``), so that case counts as absent.
+    """
+    try:
+        return importlib.util.find_spec(module) is not None
+    except ModuleNotFoundError:
+        return False
+
+
+# These tests patch a provider SDK directly, so they need it installed. Each
+# SDK is an optional extra (see pyproject.toml); without it the tests skip
+# with this reason instead of failing. CI installs `.[dev,llm]` so they run.
+requires_anthropic = pytest.mark.skipif(
+    not _sdk_installed("anthropic"), reason="anthropic SDK not installed (pip install -e '.[llm-anthropic]')"
+)
+requires_openai = pytest.mark.skipif(
+    not _sdk_installed("openai"), reason="openai SDK not installed (pip install -e '.[llm-openai]')"
+)
+requires_gemini = pytest.mark.skipif(
+    not _sdk_installed("google.genai"), reason="google-genai SDK not installed (pip install -e '.[llm-gemini]')"
+)
+
 # --- Anthropic -------------------------------------------------------------
 
 
@@ -41,6 +68,7 @@ def test_generator_raises_when_anthropic_not_installed(monkeypatch: pytest.Monke
         AnthropicNarrativeGenerator(api_key="sk-test")
 
 
+@requires_anthropic
 def test_generate_returns_text_from_mocked_client() -> None:
     from anthropic.types import TextBlock
 
@@ -58,6 +86,7 @@ def test_generate_returns_text_from_mocked_client() -> None:
     mock_client.messages.create.assert_called_once()
 
 
+@requires_anthropic
 def test_generate_raises_on_empty_response_content() -> None:
     with patch("anthropic.Anthropic") as mock_anthropic_cls:
         mock_client = MagicMock()
@@ -69,6 +98,7 @@ def test_generate_raises_on_empty_response_content() -> None:
             generator.generate("some prompt")
 
 
+@requires_anthropic
 def test_generate_raises_when_no_text_blocks_present() -> None:
     with patch("anthropic.Anthropic") as mock_anthropic_cls:
         mock_client = MagicMock()
@@ -82,6 +112,7 @@ def test_generate_raises_when_no_text_blocks_present() -> None:
             generator.generate("some prompt")
 
 
+@requires_anthropic
 def test_generate_wraps_api_error_as_llm_error() -> None:
     import anthropic
 
@@ -111,6 +142,7 @@ def test_openai_generator_raises_when_openai_not_installed(monkeypatch: pytest.M
         OpenAINarrativeGenerator(api_key="sk-test")
 
 
+@requires_openai
 def test_openai_generate_returns_text_from_mocked_client() -> None:
     with patch("openai.OpenAI") as mock_openai_cls:
         mock_client = MagicMock()
@@ -126,6 +158,7 @@ def test_openai_generate_returns_text_from_mocked_client() -> None:
     mock_client.chat.completions.create.assert_called_once()
 
 
+@requires_openai
 def test_openai_generate_raises_on_empty_choices() -> None:
     with patch("openai.OpenAI") as mock_openai_cls:
         mock_client = MagicMock()
@@ -137,6 +170,7 @@ def test_openai_generate_raises_on_empty_choices() -> None:
             generator.generate("some prompt")
 
 
+@requires_openai
 def test_openai_generate_wraps_api_error_as_llm_error() -> None:
     import openai
 
@@ -166,6 +200,7 @@ def test_gemini_generator_raises_when_sdk_not_installed(monkeypatch: pytest.Monk
         GeminiNarrativeGenerator(api_key="sk-test")
 
 
+@requires_gemini
 def test_gemini_generate_returns_text_from_mocked_client() -> None:
     with patch("google.genai.Client") as mock_client_cls:
         mock_client = MagicMock()
@@ -179,6 +214,7 @@ def test_gemini_generate_returns_text_from_mocked_client() -> None:
     mock_client.models.generate_content.assert_called_once()
 
 
+@requires_gemini
 def test_gemini_generate_raises_on_empty_text() -> None:
     with patch("google.genai.Client") as mock_client_cls:
         mock_client = MagicMock()
@@ -190,6 +226,7 @@ def test_gemini_generate_raises_on_empty_text() -> None:
             generator.generate("some prompt")
 
 
+@requires_gemini
 def test_gemini_generate_wraps_api_error_as_llm_error() -> None:
     from google.genai import errors as genai_errors
 
@@ -266,16 +303,19 @@ def test_create_narrative_generator_unknown_provider_raises() -> None:
         create_narrative_generator("not-a-real-provider", api_key="sk-test")
 
 
+@requires_anthropic
 def test_create_narrative_generator_dispatches_to_anthropic() -> None:
     generator = create_narrative_generator("anthropic", api_key="sk-test")
     assert isinstance(generator, AnthropicNarrativeGenerator)
 
 
+@requires_openai
 def test_create_narrative_generator_dispatches_to_openai() -> None:
     generator = create_narrative_generator("openai", api_key="sk-test")
     assert isinstance(generator, OpenAINarrativeGenerator)
 
 
+@requires_gemini
 def test_create_narrative_generator_dispatches_to_gemini() -> None:
     generator = create_narrative_generator("gemini", api_key="sk-test")
     assert isinstance(generator, GeminiNarrativeGenerator)

@@ -57,6 +57,10 @@ layout, and check Section 11's quality claims (mypy and pyflakes clean) at
 the same time, since CI doesn't verify them yet.
 
 ## 4. Unit tests: CI and optional-extras failures
+✅ Done 18 Oct 2026, except desktop interface testing, which moves to
+items 6 and 15 (Playwright). `tests.yml` runs pytest (Python 3.12 and 3.13,
+90% coverage floor), a run without AI extras, and mypy plus pyflakes. The
+13 SDK tests skip cleanly without their packages.
 - The 142 tests never run in CI; only template validation does. Add a
   `pytest` job (with coverage) on pull requests and pushes to `main`.
 - 13 tests in `tests/test_llm.py` fail with `ModuleNotFoundError` unless the
@@ -185,4 +189,84 @@ Separate from the broader vault review in item 1.
   or exported bundles.
 - Review how the passphrase is entered (no echo, no shell history) and what
   happens on Windows, where file permissions are best-effort.
+
+## 14. Discuss desktop-style use hosted on AWS
+Discussion item, not yet a decision. Explore running QuestVector on AWS so it
+can be used from any device rather than only from a local install.
+
+**Conflicts with an accepted decision.** ADR-0001 says nothing is hosted or
+published externally, ever, and the README and spec repeat it. Any hosted
+option needs a new ADR that supersedes or narrows ADR-0001, and the README,
+spec, and PRD non-goals updated to match.
+
+Options to compare:
+- **Private, single-user deployment in the owner's own AWS account.** The
+  closest fit to the local-first intent: the owner is still the only person
+  with the data. Variants:
+  - The existing desktop web UI served as a web app (Lambda behind
+    CloudFront, as in risk-trainer), with the Python bridge calls becoming
+    API calls.
+  - The desktop app itself on a cloud desktop (an EC2 instance with remote
+    display, or Amazon WorkSpaces). Least code change; likely not free.
+- **Self-host kit for other users.** Terraform others deploy into their own
+  AWS accounts, so each user keeps their own data. Keeps the spirit of
+  ADR-0001 (no shared service holding anyone else's data).
+- **Shared multi-user service.** Accounts, tenant isolation, and holding
+  other people's career data. The largest change in scope, risk, and cost;
+  likely out of scope.
+
+Questions to settle:
+- **Data storage.** Where the dossier and bundles live (S3 with encryption),
+  and whether a user can still edit plain Markdown files.
+- **Secrets.** The vault's replacement: SSM Parameter Store SecureString or
+  Secrets Manager, and whether the passphrase model still applies.
+- **Authentication.** Even a single-user deployment needs sign-in so the
+  dossier isn't public.
+- **Local AI.** Ollama needs compute that the always-free tier doesn't
+  provide, so the $0 local-model path (item 9) would stay desktop-only.
+- **Cost.** Can it stay at $0 within always-free limits, as risk-trainer
+  does? Verify current AWS free-tier terms before deciding.
+- **Security baseline.** Reuse risk-trainer's controls: least-privilege IAM,
+  OIDC deploys with an approval gate, WAF and rate limits, budget alarms.
+
+Career relevance: an AWS-hosted variant would show AWS architecture,
+Terraform, and security design on a second project, alongside risk-trainer.
+
+## 15. UI/UX consistency with risk-trainer
+Review the desktop app's interface so it is consistent with risk-trainer and
+offers comparable features, adapted to a desktop app rather than a website.
+
+Starting facts (quick scan, 16 Oct): the interface is about 550 lines of
+plain HTML, CSS, and JavaScript in `questvector/desktop/web/`, themed as the
+"Tactical Ops Flight Deck" HUD. It already loads no external scripts or
+inline scripts. It has one ARIA attribute, no visible focus styles, no
+responsive layout rules, and no light/dark handling.
+
+Compare against risk-trainer's PRD requirements and look:
+- **Accessibility:** WCAG 2.2 AA target, labels on every input, visible
+  focus, keyboard-only use, color never the only signal. The G-Force gauge
+  and alert colors need a text equivalent.
+- **Layout:** usable at small window sizes (risk-trainer targets 360 px).
+- **Help and reference content:** risk-trainer has About, Privacy, and a
+  reference page. QuestVector equivalents: a short first-run explanation, a
+  page explaining the score (PRD R5), the dossier format, and a privacy page
+  stating what stays local and what a remote AI provider receives (PRD R13).
+- **Result presentation:** risk-trainer's debrief explains each result.
+  Apply the same to a match: why each category scored as it did, which
+  keywords matched, and what to add to the dossier.
+- **Errors:** plain-language messages; no stack traces shown.
+- **Content Security Policy:** risk-trainer enforces a strict CSP with no
+  inline scripts; set the same in `index.html`.
+- **Visual identity:** decided 16 Oct: keep the Flight Deck look, and share
+  conventions with risk-trainer where they make sense (accessibility,
+  layout behavior, help pages, error handling, CSP), not its visual design.
+  Record this as an ADR when the work starts.
+- **Terminology (undecided, review later):** the HUD vocabulary
+  ("Sync-AST," "Lock-On Red," "Afterburner Amber," "G-Force") may confuse
+  new users. Make quick mockups of two or three labeling options (themed
+  only, plain only, plain with themed names secondary) and decide from them.
+
+Needs risk-trainer's front-end code (templates and CSS), not just its PRD,
+for a side-by-side comparison. Pairs with PRD R19 (Playwright tests for each
+tab) and backlog item 6.
 

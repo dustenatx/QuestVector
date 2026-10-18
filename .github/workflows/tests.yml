@@ -1,0 +1,121 @@
+name: "Tests"
+
+# Runs the test suite, type checks, and lint on every pull request to main
+# and every push to main. Two install profiles:
+#   - full:    .[dev,llm], so all 142 tests run, including the cloud AI
+#              provider tests that patch each SDK.
+#   - minimal: .[dev] only, proving the core works without any AI SDK and
+#              that the provider tests skip cleanly rather than fail.
+# No test needs a network connection, an API key, or a display.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: "pytest (${{ matrix.profile }}, Python ${{ matrix.python-version }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+        profile: [full]
+        include:
+          - python-version: "3.12"
+            profile: minimal
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install QuestVector
+        run: |
+          python -m pip install --upgrade pip
+          if [ "${{ matrix.profile }}" = "full" ]; then
+            python -m pip install -e ".[dev,llm]"
+          else
+            python -m pip install -e ".[dev]"
+          fi
+
+      # The 90% floor (pyproject.toml) is enforced on the full install only.
+      # The minimal install skips the 13 SDK tests, so its coverage sits near
+      # the floor by design; its job is to prove the skip path works.
+      - name: Run tests with coverage
+        run: |
+          if [ "${{ matrix.profile }}" = "full" ]; then FLOOR=""; else FLOOR="--cov-fail-under=0"; fi
+          pytest --cov=questvector --cov-report=term-missing --cov-report=xml \
+                 --junitxml=pytest-results.xml $FLOOR
+
+      - name: Write summary
+        if: always()
+        shell: bash
+        run: |
+          python - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import os
+          import xml.etree.ElementTree as ET
+          profile = os.environ["PROFILE"]
+          version = os.environ["PYVER"]
+          print(f"## Tests: {profile} install, Python {version}\n")
+          try:
+              suite = ET.parse("pytest-results.xml").getroot()
+              suite = suite.find("testsuite") if suite.tag == "testsuites" else suite
+              total, fail = int(suite.get("tests")), int(suite.get("failures"))
+              err, skip = int(suite.get("errors")), int(suite.get("skipped"))
+              print(f"**{total - fail - err - skip} passed, {fail + err} failed, {skip} skipped**\n")
+          except (OSError, ET.ParseError, AttributeError, TypeError):
+              print("Test results file not found; see the job log.\n")
+          try:
+              rate = float(ET.parse("coverage.xml").getroot().get("line-rate"))
+              print(f"Line coverage: **{rate:.1%}** (minimum 90%)")
+          except (OSError, ET.ParseError, TypeError):
+              print("Coverage report not found; see the job log.")
+          EOF
+        env:
+          PROFILE: ${{ matrix.profile }}
+          PYVER: ${{ matrix.python-version }}
+
+  static-checks:
+    name: "mypy and pyflakes"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install QuestVector
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,llm]"
+
+      - name: Type check (mypy)
+        run: mypy questvector
+
+      - name: Lint (pyflakes)
+        run: pyflakes questvector tests

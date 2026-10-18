@@ -52,3 +52,12 @@ version = { attr = "questvector.__version__" }
 
 [tool.setuptools.package-data]
 questvector = ["data/starter_templates/*.yaml", "desktop/web/*"]
+
+[tool.coverage.run]
+source = ["questvector"]
+branch = false
+
+[tool.coverage.report]
+# CI fails if line coverage drops below this (measured 95% on 18 Oct 2026).
+fail_under = 90
+show_missing = true
