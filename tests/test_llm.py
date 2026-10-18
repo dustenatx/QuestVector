@@ -250,6 +250,16 @@ def test_ollama_generator_requires_model_name() -> None:
         OllamaNarrativeGenerator(model="")
 
 
+@pytest.mark.parametrize("host", ["file:///etc/passwd", "ftp://localhost", "localhost:11434", ""])
+def test_ollama_generator_rejects_non_http_host(host: str) -> None:
+    with pytest.raises(LLMError, match="http:// or https://"):
+        OllamaNarrativeGenerator(model="llama3.1", host=host)
+
+
+def test_ollama_generator_accepts_https_host() -> None:
+    OllamaNarrativeGenerator(model="llama3.1", host="https://ollama.example.test:11434/")
+
+
 def test_ollama_generate_returns_text_from_mocked_server() -> None:
     fake_response = MagicMock()
     fake_response.read.return_value = json.dumps({"response": "Tailored summary paragraph."}).encode("utf-8")

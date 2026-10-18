@@ -5,21 +5,14 @@ name: "QuestVector Template Validation"
 # only the changed ones: the set is small, and it avoids a third-party
 # changed-files action and the diff-base edge cases that come with one.
 
+# Runs on every pull request, not only ones that touch templates, so it can
+# be a required status check: a required check that never starts would leave
+# the pull request waiting. The run takes well under a minute.
 on:
   pull_request:
     branches: [main]
-    paths:
-      - "templates/**.yaml"
-      - "templates/**.yml"
-      - "questvector/core/templates.py"
-      - ".github/workflows/template-validation.yml"
   push:
     branches: [main]
-    paths:
-      - "templates/**.yaml"
-      - "templates/**.yml"
-      - "questvector/core/templates.py"
-      - ".github/workflows/template-validation.yml"
   workflow_dispatch:
 
 # Read-only token: results go to the run summary, not a PR comment, so this
@@ -31,13 +24,16 @@ jobs:
   validate-templates:
     name: "Validate mission templates"
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
           cache: pip

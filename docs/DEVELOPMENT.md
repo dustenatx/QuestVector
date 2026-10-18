@@ -19,7 +19,7 @@ pip install -e ".[dev,llm]"
 
 `[dev]` installs pytest, mypy, pyflakes, and the type stubs mypy needs.
 `[llm]` installs the three cloud AI provider SDKs. Without it, the 13 tests
-that patch those SDKs skip with the reason shown; install it to run all 142. Running the desktop app (`python -m questvector.desktop.app`) also
+that patch those SDKs skip with the reason shown; install it to run all 147. Running the desktop app (`python -m questvector.desktop.app`) also
 needs pywebview's platform dependencies and a display.
 
 ## Checks
@@ -27,7 +27,7 @@ needs pywebview's platform dependencies and a display.
 Run all of these before opening a pull request:
 
 ```bash
-pytest                                            # 142 tests (129 + 13 skipped without [llm])
+pytest                                            # 147 tests (134 + 13 skipped without [llm])
 pytest --cov=questvector                          # fails below 90% line coverage
 mypy questvector                                  # type checks; expect "no issues found"
 pyflakes questvector tests                        # lint; expect no output
@@ -39,10 +39,33 @@ What CI runs (`.github/workflows/`):
   pytest with coverage on Python 3.12 and 3.13 with all extras (90% floor
   enforced), pytest on Python 3.12 without the AI extras (proves the skip
   path), and mypy plus pyflakes.
-- **Template validation** (`template-validation.yml`), when templates, the
-  validator, or that workflow change.
+- **Template validation** (`template-validation.yml`), on every pull
+  request and push to `main`.
+- **Security** (`security.yml`), on every pull request and push to `main`:
+  gitleaks over the git history, Semgrep with the `p/default` rules, and
+  pip-audit over every installed dependency. gitleaks and Semgrep findings
+  also appear on the repository's Security tab.
+- **CodeQL**, through GitHub's default setup (repository settings, not a
+  workflow file).
 
-Results appear in each run's summary on the pull request's Checks tab.
+Results appear in each run's summary on the pull request's Checks tab. All
+of these are required checks on `main`
+([ADR-0011](decisions/0011-github-security-baseline.md)): a pull request
+can't merge until they pass, and it merges by squash only.
+
+The ruleset lives in `.github/rulesets/main.json`. Renaming, adding, or
+removing a CI job means editing that file in the same pull request, then
+re-applying it after merge (the owner runs this; it needs admin rights):
+
+```bash
+gh api repos/dustenatx/QuestVector/rulesets --jq '.[] | select(.name=="main") | .id'
+gh api -X PUT repos/dustenatx/QuestVector/rulesets/<id> --input .github/rulesets/main.json
+```
+
+To run the security scans locally (optional): `semgrep scan --config
+p/default --metrics=off`, and `pip-audit` inside your virtual environment.
+A false positive can be suppressed with an inline
+`# nosemgrep: <rule-id>` comment that states the reason.
 
 No test needs a network connection, an API key, or a display. Narrative
 generation is tested against simulated providers, not live ones (backlog

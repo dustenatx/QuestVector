@@ -1,0 +1,57 @@
+{
+  "name": "main",
+  "target": "branch",
+  "enforcement": "active",
+  "bypass_actors": [],
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/main"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    { "type": "required_linear_history" },
+    {
+      "type": "pull_request",
+      "parameters": {
+        "allowed_merge_methods": ["squash"],
+        "dismiss_stale_reviews_on_push": false,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_approving_review_count": 0,
+        "required_review_thread_resolution": true
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "do_not_enforce_on_create": false,
+        "strict_required_status_checks_policy": false,
+        "required_status_checks": [
+          { "context": "pytest (full, Python 3.12)", "integration_id": 15368 },
+          { "context": "pytest (full, Python 3.13)", "integration_id": 15368 },
+          { "context": "pytest (minimal, Python 3.12)", "integration_id": 15368 },
+          { "context": "mypy and pyflakes", "integration_id": 15368 },
+          { "context": "Validate mission templates", "integration_id": 15368 },
+          { "context": "gitleaks", "integration_id": 15368 },
+          { "context": "semgrep", "integration_id": 15368 },
+          { "context": "pip-audit", "integration_id": 15368 }
+        ]
+      }
+    },
+    {
+      "type": "code_scanning",
+      "parameters": {
+        "code_scanning_tools": [
+          {
+            "tool": "CodeQL",
+            "alerts_threshold": "errors",
+            "security_alerts_threshold": "high_or_higher"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -66,6 +66,7 @@ from __future__ import annotations
 
 import json
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -461,12 +462,21 @@ class OllamaNarrativeGenerator:
             max_tokens: Maximum tokens to generate per call.
 
         Raises:
-            LLMError: If ``model`` is empty.
+            LLMError: If ``model`` is empty, or ``host`` isn't an
+                ``http://`` or ``https://`` URL.
         """
         if not model:
             raise LLMError(
                 "An Ollama model name is required (e.g. 'llama3.1') -- "
                 "run 'ollama pull <model>' first"
+            )
+        # urllib also opens file:// and ftp:// URLs; only HTTP reaches Ollama.
+        parsed = urllib.parse.urlsplit(host)
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            raise LLMError(
+                f"The Ollama host must be an http:// or https:// URL, got {host!r} "
+                f"(the default is {DEFAULT_OLLAMA_HOST})",
+                context={"host": host},
             )
         self._model = model
         self._host = host.rstrip("/")
@@ -502,7 +512,8 @@ class OllamaNarrativeGenerator:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(request, timeout=120) as resp:
+            # The scheme is limited to http(s) in __init__.
+            with urllib.request.urlopen(request, timeout=120) as resp:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
                 body = json.loads(resp.read().decode("utf-8"))
         except urllib.error.URLError as exc:
             raise LLMError(
