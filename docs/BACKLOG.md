@@ -36,6 +36,16 @@ or drift. Known starting points:
   keyword is `cicd`, so they never match. Similar risks: "SOC 2" vs `soc2`,
   "K8s" vs `kubernetes`. Review tokenizer normalization and the starter
   templates' keyword forms together; add tests for common variants.
+- **Negative statements match as keywords.** Found 18 Oct while converting
+  a real dossier: matching is by keyword, so a bullet such as "no hands-on
+  Kubernetes" or "never used HashiCorp Vault" counts as a Kubernetes or
+  Vault match, and narrative generation may present it as a skill. Today
+  the only protection is leaving such statements out of the dossier, which
+  the README doesn't mention. Options to weigh: document the rule in the
+  README's dossier section; have `qv` warn when a bullet contains a negation
+  ("no", "not", "never", "training only") next to a keyword; or support an
+  explicit exclusions section that matching ignores. Add a test with a
+  negated skill either way.
 - **Spec traceability.** Code cites `MASTER_DEVELOPER_SPEC.pdf` section numbers;
   that file isn't in the repo. Decide whether to add it, or re-point citations
   to `docs/QuestVector_Spec.pdf`.
