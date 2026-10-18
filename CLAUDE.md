@@ -22,6 +22,13 @@ Python core. Read these before changing anything:
   and merges every change. Never push to `main` directly.
 - **Before every commit**, run and pass: `pytest`, `mypy questvector`,
   `pyflakes questvector tests`. CI runs the same checks.
+- **CI job names are required checks (ADR-0011).** The `main` ruleset,
+  defined in `.github/rulesets/main.json`, requires each check by job name.
+  Never rename, remove, or add a CI job, or change the test matrix, without
+  updating that file in the same pull request, and say in the PR
+  description that the ruleset must be re-applied when it merges.
+- **Pin actions to commit SHAs** with a version comment
+  (`uses: owner/action@<sha> # vX.Y.Z`); never a bare tag.
 - **Record every change** under `[Unreleased]` in `CHANGELOG.md`; add a
   record in `docs/decisions/` for any significant design choice; update the
   PRD when a requirement changes; mark backlog items done when finished.

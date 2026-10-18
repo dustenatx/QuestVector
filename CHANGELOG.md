@@ -14,6 +14,10 @@ record in [`docs/decisions/`](docs/decisions/).
 ## [Unreleased]
 
 ### Added
+- `Security` GitHub Actions workflow: gitleaks (git history), Semgrep (static analysis), and pip-audit (dependency vulnerabilities) on every pull request and push to `main`; gitleaks and Semgrep results also go to the Security tab. ([ADR-0011](docs/decisions/0011-github-security-baseline.md))
+- `.github/dependabot.yml`: weekly version updates for pip and GitHub Actions, with a 7-day cooldown.
+- `SECURITY.md`: how to report a vulnerability privately.
+- `.github/rulesets/main.json`: the `main` branch ruleset (squash-only pull requests, required checks, no bypass), kept in the repo so changes are reviewed; and a `CLAUDE.md` rule that a CI job can't be renamed without updating it in the same pull request.
 - `Tests` GitHub Actions workflow: pytest with coverage on Python 3.12 and 3.13, a run without the AI extras, and mypy plus pyflakes, on every pull request and push to `main`.
 - 90% line-coverage floor in `pyproject.toml` (measured 95%).
 - `CLAUDE.md` with project rules for AI-assisted development.
@@ -31,6 +35,9 @@ record in [`docs/decisions/`](docs/decisions/).
 - mypy, pyflakes, and the type stubs mypy needs (`types-PyYAML`, `types-reportlab`) in the `[dev]` extra, so the spec's "mypy clean" claim can be reproduced.
 
 ### Changed
+- Every GitHub Action is pinned to a commit SHA (checkout v7.0.1, setup-python v7.0.0), and checkout no longer keeps the token in the working copy.
+- Template validation runs on every pull request, so it can be a required check.
+- The Ollama generator rejects a host that isn't an `http://` or `https://` URL, instead of passing it to urllib, which also opens `file://` URLs.
 - The 13 tests that patch a cloud AI SDK now skip, with the install command as the reason, when that SDK isn't installed, instead of failing.
 - Template-validation workflow rewritten for the Python build: installs with
   pip on Python 3.12 and validates every template under `templates/` with

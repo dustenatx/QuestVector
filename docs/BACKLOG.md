@@ -41,6 +41,12 @@ or drift. Known starting points:
   to `docs/QuestVector_Spec.pdf`.
 
 ## 2. GitHub configuration, modeled on risk-trainer
+✅ Done 18 Oct 2026 ([ADR-0011](decisions/0011-github-security-baseline.md)):
+actions pinned to SHAs; gitleaks, Semgrep, and pip-audit in CI; Dependabot
+version updates; `SECURITY.md`. Repository settings (the `main` ruleset with
+no bypass, squash-only merges, private vulnerability reporting) are applied
+once the pull request merges. The Claude review workflow was left out; the
+lock file for pip-audit moves to item 11.
 Compare against risk-trainer's scanning and repository settings and adopt
 what fits a local-only Python app. Candidates: branch protection on `main`,
 required status checks, Dependabot (pip and GitHub Actions), CodeQL or
@@ -157,6 +163,8 @@ as models.
 ## 11. Further topics to discuss
 - Release and versioning: tagged releases tied to the changelog (item 10),
   and how users get updates without a hosted service.
+- A dependency lock file, so pip-audit (item 2) checks fixed versions
+  rather than whatever pip resolves on the day it runs.
 - Packaging and install experience across macOS, Windows, and Linux
   (pywebview's platform dependencies; Python 3.12+ requirement).
 - Privacy documentation: a short threat model for local data and the vault.
