@@ -18,8 +18,8 @@ pip install -e ".[dev,llm]"
 ```
 
 `[dev]` installs pytest, mypy, pyflakes, and the type stubs mypy needs.
-`[llm]` installs the three cloud AI provider SDKs; the provider tests need
-them. Running the desktop app (`python -m questvector.desktop.app`) also
+`[llm]` installs the three cloud AI provider SDKs. Without it, the 13 tests
+that patch those SDKs skip with the reason shown; install it to run all 142. Running the desktop app (`python -m questvector.desktop.app`) also
 needs pywebview's platform dependencies and a display.
 
 ## Checks
@@ -27,17 +27,22 @@ needs pywebview's platform dependencies and a display.
 Run all of these before opening a pull request:
 
 ```bash
-pytest                                            # 142 tests
-pytest --cov=questvector --cov-report=term-missing
+pytest                                            # 142 tests (129 + 13 skipped without [llm])
+pytest --cov=questvector                          # fails below 90% line coverage
 mypy questvector                                  # type checks; expect "no issues found"
 pyflakes questvector tests                        # lint; expect no output
 qv template validate templates/boilerplate.qv-mission.yaml
 ```
 
-What CI runs today: template validation only, on pull requests and pushes
-to `main` that touch templates, the validator, or the workflow. Tests, type
-checks, and linting are not in CI yet (backlog items 2 and 4), so run them
-locally.
+What CI runs (`.github/workflows/`):
+- **Tests** (`tests.yml`), on every pull request and push to `main`:
+  pytest with coverage on Python 3.12 and 3.13 with all extras (90% floor
+  enforced), pytest on Python 3.12 without the AI extras (proves the skip
+  path), and mypy plus pyflakes.
+- **Template validation** (`template-validation.yml`), when templates, the
+  validator, or that workflow change.
+
+Results appear in each run's summary on the pull request's Checks tab.
 
 No test needs a network connection, an API key, or a display. Narrative
 generation is tested against simulated providers, not live ones (backlog

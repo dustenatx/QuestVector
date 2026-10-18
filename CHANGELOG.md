@@ -14,6 +14,9 @@ record in [`docs/decisions/`](docs/decisions/).
 ## [Unreleased]
 
 ### Added
+- `Tests` GitHub Actions workflow: pytest with coverage on Python 3.12 and 3.13, a run without the AI extras, and mypy plus pyflakes, on every pull request and push to `main`.
+- 90% line-coverage floor in `pyproject.toml` (measured 95%).
+- `CLAUDE.md` with project rules for AI-assisted development.
 - `.gitignore` for Python caches, build output, virtual environments, and OS files.
 - `templates/boilerplate.qv-mission.yaml` in the current schema, at the path
   `CONTRIBUTING_TEMPLATES.md` already referenced.
@@ -28,6 +31,7 @@ record in [`docs/decisions/`](docs/decisions/).
 - mypy, pyflakes, and the type stubs mypy needs (`types-PyYAML`, `types-reportlab`) in the `[dev]` extra, so the spec's "mypy clean" claim can be reproduced.
 
 ### Changed
+- The 13 tests that patch a cloud AI SDK now skip, with the install command as the reason, when that SDK isn't installed, instead of failing.
 - Template-validation workflow rewritten for the Python build: installs with
   pip on Python 3.12 and validates every template under `templates/` with
   `qv template validate`. It previously set up Node and ran `npm install`, so

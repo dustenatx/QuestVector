@@ -70,7 +70,7 @@ Matching is by keyword, so use the terms a job description would use (for exampl
 pytest                                          # 142 tests
 pytest --cov=questvector --cov-report=term-missing
 ```
-13 of the tests exercise the cloud AI providers and need their SDKs installed (`[llm]`); without them those tests fail rather than skip. Linting, type checks, and the full contributor workflow are in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
+13 of the tests exercise the cloud AI providers and need their SDKs installed (`[llm]`); without them those tests skip with the reason shown. GitHub Actions runs the suite, type checks, and lint on every pull request. Linting, type checks, and the full contributor workflow are in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Version
 ```bash

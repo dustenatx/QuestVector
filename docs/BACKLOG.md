@@ -57,6 +57,10 @@ layout, and check Section 11's quality claims (mypy and pyflakes clean) at
 the same time, since CI doesn't verify them yet.
 
 ## 4. Unit tests: CI and optional-extras failures
+✅ Done 18 Oct 2026, except desktop interface testing, which moves to
+items 6 and 15 (Playwright). `tests.yml` runs pytest (Python 3.12 and 3.13,
+90% coverage floor), a run without AI extras, and mypy plus pyflakes. The
+13 SDK tests skip cleanly without their packages.
 - The 142 tests never run in CI; only template validation does. Add a
   `pytest` job (with coverage) on pull requests and pushes to `main`.
 - 13 tests in `tests/test_llm.py` fail with `ModuleNotFoundError` unless the
