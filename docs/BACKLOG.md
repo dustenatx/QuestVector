@@ -46,6 +46,10 @@ or drift. Known starting points:
   ("no", "not", "never", "training only") next to a keyword; or support an
   explicit exclusions section that matching ignores. Add a test with a
   negated skill either way.
+- **Role titles in headings may not count toward matching.** Found 18 Oct
+  with a synthetic dossier: the match reported `manager` as a gap although
+  the role headings say "Engineering Manager". Check whether the parser
+  excludes `##` headings from the keyword set, and add a test.
 - **Spec traceability.** Code cites `MASTER_DEVELOPER_SPEC.pdf` section numbers;
   that file isn't in the repo. Decide whether to add it, or re-point citations
   to `docs/QuestVector_Spec.pdf`.
