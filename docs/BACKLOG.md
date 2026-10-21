@@ -148,6 +148,21 @@ Remaining: configure `qv vault set-key --provider ollama` and run narrative
 generation on the real dossier (the owner's step), and decide whether
 `DEFAULT_OLLAMA_MODEL` should change from llama3.1.
 
+Follow-ups found in the PR #7 review (20 Oct 2026), not yet fixed:
+- **Connection reset mid-response.** If the Ollama server stops partway
+  through a reply, `http.client.RemoteDisconnected` (an `OSError`, not a
+  `URLError`) escapes `OllamaNarrativeGenerator.generate` as a raw
+  traceback, the same class of bug as the timeout. Wrap it in `LLMError`
+  and add a test.
+- **`qv vault set-key` resets the timeout.** Running it again without
+  `--timeout` sets `llm_timeout` back to the default, as `--host` already
+  does for the host. Decide whether unset flags should keep the stored
+  values, and document the behavior either way.
+- **Desktop prompt omits the template's tone.** `qv export --narrative`
+  passes the template's `tone_style` to `build_narrative_prompt`; the
+  desktop app's Generate Narrative doesn't. Make the two build the same
+  prompt, with a test.
+
 Set up Ollama on the Mac and choose a model that suits this project: drafting
 a short, accurate resume summary from dossier text. Goals:
 - Learn how a local model is installed, pulled, served, and called.
