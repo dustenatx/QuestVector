@@ -40,6 +40,9 @@ qv = "questvector.cli:main"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+markers = [
+    "live: calls a real AI provider or local server; skipped unless opted in (see docs/DEVELOPMENT.md)",
+]
 
 [tool.setuptools.packages.find]
 include = ["questvector*"]

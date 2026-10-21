@@ -19,7 +19,8 @@ pip install -e ".[dev,llm]"
 
 `[dev]` installs pytest, mypy, pyflakes, and the type stubs mypy needs.
 `[llm]` installs the three cloud AI provider SDKs. Without it, the 13 tests
-that patch those SDKs skip with the reason shown; install it to run all 147. Running the desktop app (`python -m questvector.desktop.app`) also
+that patch those SDKs skip with the reason shown; install it to run all 173
+that run by default (the live Ollama test is opt-in; see below). Running the desktop app (`python -m questvector.desktop.app`) also
 needs pywebview's platform dependencies and a display.
 
 ## Checks
@@ -27,7 +28,7 @@ needs pywebview's platform dependencies and a display.
 Run all of these before opening a pull request:
 
 ```bash
-pytest                                            # 147 tests (134 + 13 skipped without [llm])
+pytest                                            # 174 tests: 173 run, 1 live test skipped (13 more skip without [llm])
 pytest --cov=questvector                          # fails below 90% line coverage
 mypy questvector                                  # type checks; expect "no issues found"
 pyflakes questvector tests                        # lint; expect no output
@@ -68,8 +69,41 @@ A false positive can be suppressed with an inline
 `# nosemgrep: <rule-id>` comment that states the reason.
 
 No test needs a network connection, an API key, or a display. Narrative
-generation is tested against simulated providers, not live ones (backlog
-items 8 and 9).
+generation is tested against simulated providers by default. The one live
+test, against a local Ollama server, is opt-in and skipped otherwise (next
+section). A live test against a remote provider is still planned (backlog
+item 8).
+
+### Live test against a local Ollama
+
+`tests/test_ollama_live.py` runs narrative generation end to end through
+QuestVector's Ollama provider, on the synthetic dossier and job description
+in `tests/fixtures/ollama_live/`. Nothing leaves the machine. It checks that
+a non-empty narrative comes back without an error; it doesn't check
+accuracy (backlog item 5). `answer_key.json` in the same folder lists the
+allowed facts and the three trap keywords (Datadog, HashiCorp Vault, SOC 2:
+in the job description, not the dossier) for scoring output by hand.
+
+1. Install Ollama from [ollama.com](https://ollama.com/download) and start
+   it (the app, or `ollama serve`).
+2. Pull a model, for example `ollama pull gemma4:12b-it-q4_K_M`.
+3. Run:
+
+   ```bash
+   QV_OLLAMA_LIVE=1 QV_OLLAMA_MODEL=gemma4:12b-it-q4_K_M pytest tests/test_ollama_live.py
+   ```
+
+Settings: `QV_OLLAMA_LIVE=1` turns the test on; `QV_OLLAMA_MODEL` (default
+`llama3.1`), `QV_OLLAMA_HOST` (default `http://localhost:11434`), and
+`QV_OLLAMA_TIMEOUT` in seconds (default 300) are optional. With the test
+turned on, an unreachable server or a model that isn't pulled fails the
+test rather than skipping it.
+
+Model choice: gemma4:12b-it-q4_K_M had the fewest invented facts in 5 runs
+on synthetic data with thinking off, 20 Oct 2026 (none, against 3 of 5 for
+both llama3.1:8b and qwen3.5:9b-q4_K_M), on Ollama 0.40.6 on a 24 GB Mac.
+QuestVector switches thinking off for every Ollama model
+([ADR-0012](decisions/0012-ollama-thinking-off.md)).
 
 ## Project layout
 

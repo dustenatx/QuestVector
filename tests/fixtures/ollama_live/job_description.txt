@@ -1,0 +1,19 @@
+Senior DevOps Manager, Quillon Systems (synthetic test posting)
+
+Quillon Systems is hiring a Senior DevOps Manager to lead our platform and
+reliability teams. You will own our AWS infrastructure and the people who
+run it.
+
+What you'll do:
+- Lead a team of managers and senior engineers across several time zones
+- Own infrastructure as code with Terraform and Kubernetes on AWS
+- Run CI/CD with GitHub Actions and drive deployment automation
+- Own observability with Datadog: dashboards, monitors, and SLOs
+- Run secrets management with HashiCorp Vault
+- Lead our SOC 2 Type II audit and keep controls in place year round
+- Own the infrastructure budget and report on it to stakeholders
+
+What you bring:
+- 7+ years in DevOps or SRE, with at least 3 years managing managers
+- Incident management and on-call leadership
+- Hiring and mentoring experience

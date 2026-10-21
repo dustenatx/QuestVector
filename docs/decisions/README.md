@@ -23,3 +23,4 @@ and README. Their dates are the date each decision first appears in the repo.
 | [0009](0009-bundled-starter-templates-only.md) | Bundled package templates are the only starter source | Accepted | 2026-10-15 |
 | [0010](0010-single-source-version.md) | `__version__` is the single source of the version | Accepted | 2026-09-15 |
 | [0011](0011-github-security-baseline.md) | GitHub security baseline modeled on risk-trainer | Accepted | 2026-10-18 |
+| [0012](0012-ollama-thinking-off.md) | Ollama requests switch thinking off | Accepted | 2026-10-20 |

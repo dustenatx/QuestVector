@@ -57,6 +57,8 @@ class VaultData:
             means use that provider's default model.
         llm_host: Optional server override, used only by the local
             ``"ollama"`` provider to point at a non-default local server.
+        llm_timeout: Optional response timeout in seconds, used only by
+            the local ``"ollama"`` provider. ``None`` means the default.
         session_cache: Arbitrary small key/value cache (e.g. the "template
             registry cache" from the spec) — not intended for large data.
     """
@@ -65,6 +67,7 @@ class VaultData:
     llm_api_keys: dict[str, str] = field(default_factory=dict)
     llm_model: str | None = None
     llm_host: str | None = None
+    llm_timeout: float | None = None
     session_cache: dict[str, Any] = field(default_factory=dict)
 
     def api_key_for(self, provider: str) -> str | None:
@@ -90,6 +93,7 @@ class VaultData:
             "llm_api_keys": self.llm_api_keys,
             "llm_model": self.llm_model,
             "llm_host": self.llm_host,
+            "llm_timeout": self.llm_timeout,
             "session_cache": self.session_cache,
         }
 
@@ -123,6 +127,7 @@ class VaultData:
             llm_api_keys=llm_api_keys,
             llm_model=data.get("llm_model"),
             llm_host=data.get("llm_host"),
+            llm_timeout=data.get("llm_timeout"),
             session_cache=dict(data.get("session_cache", {})),
         )
 

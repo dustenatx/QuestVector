@@ -133,6 +133,21 @@ live test (skipped by default, for example behind an environment variable)
 and a short how-to.
 
 ## 9. Install and configure a local LLM (Ollama) for learning and testing
+Partly done 20 Oct 2026 ([ADR-0012](decisions/0012-ollama-thinking-off.md)):
+Ollama 0.40.6 installed with llama3.1:8b, qwen3.5:9b-q4_K_M, and
+gemma4:12b-it-q4_K_M, compared on synthetic data. gemma4 had no invented
+facts in 5 runs; the other two invented facts in 3 of 5. The opt-in live
+test and its synthetic fixtures are in `tests/`, with a how-to in
+`docs/DEVELOPMENT.md`. The live runs found three bugs, now fixed:
+- A slow response raised a raw `TimeoutError`.
+- A missing model was reported as an unreachable server.
+- Thinking models spent the whole token limit reasoning and returned
+  nothing. Thinking is now switched off.
+
+Remaining: configure `qv vault set-key --provider ollama` and run narrative
+generation on the real dossier (the owner's step), and decide whether
+`DEFAULT_OLLAMA_MODEL` should change from llama3.1.
+
 Set up Ollama on the Mac and choose a model that suits this project: drafting
 a short, accurate resume summary from dossier text. Goals:
 - Learn how a local model is installed, pulled, served, and called.
