@@ -218,6 +218,37 @@ def test_vault_set_key_ollama_needs_no_api_key_prompt(
     assert loaded.llm_provider == "ollama"
     assert loaded.llm_model == "llama3.1"
     assert loaded.api_key_for("ollama") is None
+    assert loaded.llm_timeout is None
+
+
+def test_vault_set_key_stores_ollama_timeout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    workspace_dir = tmp_path / "ws"
+    workspace_dir.mkdir()
+    monkeypatch.setattr(cli.getpass, "getpass", lambda *_args, **_kwargs: "my-passphrase")
+
+    exit_code = cli.main(
+        ["vault", "set-key", "--dir", str(workspace_dir), "--provider", "ollama", "--timeout", "600"]
+    )
+
+    assert exit_code == 0
+    loaded = vault.load_vault(workspace_dir / ".questvector.vault", "my-passphrase")
+    assert loaded.llm_timeout == 600
+
+
+def test_vault_set_key_rejects_non_positive_timeout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    workspace_dir = tmp_path / "ws"
+    workspace_dir.mkdir()
+    monkeypatch.setattr(cli.getpass, "getpass", lambda *_args, **_kwargs: "my-passphrase")
+
+    exit_code = cli.main(
+        ["vault", "set-key", "--dir", str(workspace_dir), "--provider", "ollama", "--timeout", "0"]
+    )
+
+    assert exit_code == 1
+    assert "--timeout must be a positive number" in capsys.readouterr().err
+    assert not (workspace_dir / ".questvector.vault").exists()
 
 
 def test_vault_set_key_unknown_provider_rejected_by_argparse(tmp_path: Path) -> None:

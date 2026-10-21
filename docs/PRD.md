@@ -190,10 +190,13 @@ Acceptance criteria use EARS-style phrasing.
 - The system SHALL flag narrative sentences containing numbers or proper
   nouns that don't appear in the dossier, for the user to review.
 
-**R15 — Live provider testing at no cost.** **Planned** (backlog items 8, 9).
+**R15 — Live provider testing at no cost.** **Partly built.**
 - The test suite SHALL include opt-in live tests, skipped by default, for at
   least one remote provider on a free tier and for a local Ollama model.
 - Live tests against remote providers SHALL use synthetic data only.
+- Built: the local Ollama live test (`tests/test_ollama_live.py`), on
+  synthetic data, skipped unless `QV_OLLAMA_LIVE=1`.
+- Planned (backlog item 8): the remote-provider live test.
 
 ### 5.6 Vault
 

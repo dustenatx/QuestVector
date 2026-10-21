@@ -1,0 +1,32 @@
+{
+  "_note": "Answer key for the synthetic dossier in this folder. Everything here is made up. Only Capabilities.md reaches the model (qv export sends the first 20 capability bullets), so only its facts count as allowed.",
+  "max_tokens": 600,
+  "trap_keywords": {
+    "Datadog": ["datadog"],
+    "HashiCorp Vault": ["hashicorp", "vault"],
+    "SOC 2": ["soc 2", "soc2", "soc-2", "soc ii"]
+  },
+  "allowed_numbers": [
+    "3", "31%", "40", "15", "22", "99.5%", "99.95%", "18", "120",
+    "35", "4", "14", "$1.8M", "6", "27001"
+  ],
+  "invented_number_hints": {
+    "7+ years / 7 years": "years of experience come from the job description, not the dossier",
+    "3 years managing managers": "a duration the dossier never states"
+  },
+  "allowed_terms": [
+    "AWS", "Terraform", "Kubernetes", "EKS", "Docker", "GitHub Actions",
+    "canary", "on-call", "incident", "Prometheus", "Grafana", "ISO 27001",
+    "AWS Secrets Manager", "IAM", "Engineering Manager", "team leads"
+  ],
+  "invented_terms": [
+    "jenkins", "gitlab", "azure", "gcp", "google cloud", "ansible", "helm",
+    "argo", "splunk", "pagerduty", "new relic", "elk", "cloudformation",
+    "pci", "hipaa", "fedramp", "larkspur", "tidewell", "quillon"
+  ],
+  "invented_terms_note": "Larkspur Freight and Tidewell Health appear only in Chronology.md, which the model never sees. Quillon Systems is the target employer: naming it as the place the candidate wants to work is fine, presenting it as past experience is invented.",
+  "third_person_pronouns": [
+    "he", "she", "his", "her", "hers", "him", "himself", "herself",
+    "the candidate"
+  ]
+}
