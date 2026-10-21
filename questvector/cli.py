@@ -229,6 +229,7 @@ def _cmd_export(args: argparse.Namespace) -> int:
             api_key=vault_data.api_key_for(vault_data.llm_provider),
             model=vault_data.llm_model,
             host=vault_data.llm_host,
+            timeout=vault_data.llm_timeout,
         )
         dossier_context = "\n".join(c.text for c in dossier.capabilities[:20])
         prompt = build_narrative_prompt(dossier_context, job_description.raw_text, tone_style=template.tone_style)
@@ -275,12 +276,15 @@ def _cmd_vault_set_key(args: argparse.Namespace) -> int:
         Process exit code.
 
     Raises:
-        LLMError: If ``--provider`` isn't a known provider id.
+        LLMError: If ``--provider`` isn't a known provider id, or
+            ``--timeout`` isn't positive.
     """
     spec = PROVIDERS.get(args.provider)
     if spec is None:
         known = ", ".join(sorted(PROVIDERS))
         raise LLMError(f"Unknown LLM provider '{args.provider}' (known providers: {known})")
+    if args.timeout is not None and args.timeout <= 0:
+        raise LLMError(f"--timeout must be a positive number of seconds, got {args.timeout:g}")
 
     workspace_dir = _resolve_workspace_dir(args.dir)
     vault_path = workspace_dir / _VAULT_FILENAME
@@ -303,6 +307,7 @@ def _cmd_vault_set_key(args: argparse.Namespace) -> int:
         data.llm_provider = args.provider
         data.llm_model = model
         data.llm_host = host
+        data.llm_timeout = args.timeout
         if api_key:
             data.llm_api_keys[args.provider] = api_key
 
@@ -365,6 +370,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     set_key.add_argument("--model", help="Model override (default: the provider's default model)")
     set_key.add_argument("--host", help="Server override, used only by --provider ollama")
+    set_key.add_argument(
+        "--timeout",
+        type=float,
+        help="Seconds to wait for a response, used only by --provider ollama (default: 300)",
+    )
     set_key.add_argument("--dir", help="Workspace directory (default: current directory)")
     set_key.set_defaults(func=_cmd_vault_set_key)
 

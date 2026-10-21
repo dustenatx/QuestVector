@@ -60,6 +60,21 @@ def test_vault_data_ollama_needs_no_api_key(tmp_path: Path) -> None:
     assert loaded.llm_host == "http://localhost:11434"
 
 
+def test_vault_data_round_trips_llm_timeout(tmp_path: Path) -> None:
+    path = tmp_path / "vault.dat"
+
+    save_vault(path, "pass", VaultData(llm_provider="ollama", llm_timeout=600.0))
+
+    assert load_vault(path, "pass").llm_timeout == 600.0
+
+
+def test_from_dict_without_llm_timeout_uses_default() -> None:
+    # Vault files written before the timeout setting existed have no key.
+    data = VaultData.from_dict({"llm_provider": "ollama", "llm_model": "llama3.1"})
+
+    assert data.llm_timeout is None
+
+
 def test_from_dict_migrates_legacy_single_key_schema() -> None:
     # Pre-multi-provider vault files stored a bare ``llm_api_key`` string,
     # always for Anthropic (the only provider that existed at the time).

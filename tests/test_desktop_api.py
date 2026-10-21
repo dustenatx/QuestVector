@@ -156,6 +156,25 @@ def test_generate_narrative_success_with_mocked_llm(tmp_path: Path) -> None:
     assert response["data"]["narrative"] == "Generated summary."
 
 
+def test_generate_narrative_ollama_timeout_returns_error_instead_of_raising(tmp_path: Path) -> None:
+    # A slow local model used to raise a raw TimeoutError through the bridge.
+    workspace_dir = tmp_path / "ws"
+    api = Api()
+    api.launch_workspace(str(workspace_dir))
+    vault.save_vault(
+        workspace_dir / ".questvector.vault",
+        "pass",
+        vault.VaultData(llm_provider="ollama", llm_model="llama3.1", llm_timeout=5.0),
+    )
+
+    with patch("urllib.request.urlopen", side_effect=TimeoutError("timed out")) as mock_urlopen:
+        response = api.generate_narrative(str(workspace_dir), "some jd text", "pass")
+
+    assert response["ok"] is False
+    assert "didn't finish within its 5-second limit" in response["error"]
+    assert mock_urlopen.call_args.kwargs["timeout"] == 5.0
+
+
 def test_list_llm_providers_includes_all_four() -> None:
     api = Api()
     response = api.list_llm_providers()

@@ -55,9 +55,10 @@ this module:
    :class:`LLMError` for a missing key, a missing SDK, an API failure, or
    an empty response.
 2. Write a small factory function matching the
-   ``(*, api_key, model, host) -> NarrativeGenerator`` shape (see
+   ``(*, api_key, model, host, timeout) -> NarrativeGenerator`` shape (see
    ``_make_anthropic`` etc. below) that calls your class's constructor,
-   ignoring whichever of ``api_key``/``host`` your provider doesn't need.
+   ignoring whichever of ``api_key``/``host``/``timeout`` your provider
+   doesn't need.
 3. Add one :class:`ProviderSpec` entry to :data:`PROVIDERS` with that
    factory. That's it -- no other file needs to change.
 """
@@ -79,6 +80,9 @@ DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 DEFAULT_OLLAMA_MODEL = "llama3.1"
 DEFAULT_OLLAMA_HOST = "http://localhost:11434"
+# Seconds to wait for a local Ollama response. Generous because a local
+# model can be slow to load and run, and waiting costs nothing.
+DEFAULT_OLLAMA_TIMEOUT = 300.0
 
 # Backward-compatible alias -- earlier versions of this module supported
 # only Anthropic, and named its default model plain ``DEFAULT_MODEL``.
@@ -119,9 +123,9 @@ class ProviderSpec:
             provider's SDK, or ``None`` if no extra package is needed
             (Ollama is driven over plain HTTP via the standard library).
         factory: Builds a ready-to-use generator for this provider. Called
-            as ``factory(api_key=..., model=..., host=...)`` by
-            :func:`create_narrative_generator` -- a provider that doesn't
-            need one of these three (e.g. Ollama ignores ``api_key``)
+            as ``factory(api_key=..., model=..., host=..., timeout=...)``
+            by :func:`create_narrative_generator` -- a provider that
+            doesn't need one of these (e.g. Ollama ignores ``api_key``)
             simply ignores that argument.
     """
 
@@ -136,20 +140,32 @@ class ProviderSpec:
     factory: Callable[..., "NarrativeGenerator"]
 
 
-def _make_anthropic(*, api_key: str | None, model: str, host: str | None) -> "NarrativeGenerator":
+def _make_anthropic(
+    *, api_key: str | None, model: str, host: str | None, timeout: float | None
+) -> "NarrativeGenerator":
     return AnthropicNarrativeGenerator(api_key or "", model=model)
 
 
-def _make_openai(*, api_key: str | None, model: str, host: str | None) -> "NarrativeGenerator":
+def _make_openai(
+    *, api_key: str | None, model: str, host: str | None, timeout: float | None
+) -> "NarrativeGenerator":
     return OpenAINarrativeGenerator(api_key or "", model=model)
 
 
-def _make_gemini(*, api_key: str | None, model: str, host: str | None) -> "NarrativeGenerator":
+def _make_gemini(
+    *, api_key: str | None, model: str, host: str | None, timeout: float | None
+) -> "NarrativeGenerator":
     return GeminiNarrativeGenerator(api_key or "", model=model)
 
 
-def _make_ollama(*, api_key: str | None, model: str, host: str | None) -> "NarrativeGenerator":
-    return OllamaNarrativeGenerator(model=model, host=host or DEFAULT_OLLAMA_HOST)
+def _make_ollama(
+    *, api_key: str | None, model: str, host: str | None, timeout: float | None
+) -> "NarrativeGenerator":
+    return OllamaNarrativeGenerator(
+        model=model,
+        host=host or DEFAULT_OLLAMA_HOST,
+        timeout=timeout if timeout is not None else DEFAULT_OLLAMA_TIMEOUT,
+    )
 
 
 PROVIDERS: dict[str, ProviderSpec] = {
@@ -446,12 +462,22 @@ class OllamaNarrativeGenerator:
     the local machine: it talks over plain HTTP (standard library only, no
     extra dependency) to an Ollama server the user has already installed
     and started, with the target model already pulled. If nothing is
-    listening at ``host``, generation fails with a clear, actionable
-    :class:`LLMError` rather than a raw connection traceback.
+    listening at ``host``, the model isn't pulled, or the server is too
+    slow, generation fails with a clear, actionable :class:`LLMError`
+    rather than a raw traceback.
+
+    Thinking is always switched off (``"think": false``): a thinking model
+    otherwise spends the whole token budget reasoning and returns no
+    answer. See ``docs/decisions/0012-ollama-thinking-off.md``.
     """
 
     def __init__(
-        self, *, model: str, host: str = DEFAULT_OLLAMA_HOST, max_tokens: int = 600
+        self,
+        *,
+        model: str,
+        host: str = DEFAULT_OLLAMA_HOST,
+        max_tokens: int = 600,
+        timeout: float = DEFAULT_OLLAMA_TIMEOUT,
     ) -> None:
         """Initialize the generator with a model name and server address.
 
@@ -460,10 +486,12 @@ class OllamaNarrativeGenerator:
                 already be pulled locally via ``ollama pull <model>``.
             host: Base URL of the local Ollama server.
             max_tokens: Maximum tokens to generate per call.
+            timeout: Seconds to wait for the server's full response.
 
         Raises:
-            LLMError: If ``model`` is empty, or ``host`` isn't an
-                ``http://`` or ``https://`` URL.
+            LLMError: If ``model`` is empty, ``host`` isn't an
+                ``http://`` or ``https://`` URL, or ``timeout`` isn't
+                positive.
         """
         if not model:
             raise LLMError(
@@ -478,9 +506,15 @@ class OllamaNarrativeGenerator:
                 f"(the default is {DEFAULT_OLLAMA_HOST})",
                 context={"host": host},
             )
+        if timeout <= 0:
+            raise LLMError(
+                f"The Ollama timeout must be a positive number of seconds, got {timeout!r}",
+                context={"timeout": timeout},
+            )
         self._model = model
         self._host = host.rstrip("/")
         self._max_tokens = max_tokens
+        self._timeout = timeout
 
     def generate(self, prompt: str) -> str:
         """Generate narrative text via the local Ollama HTTP API.
@@ -493,15 +527,16 @@ class OllamaNarrativeGenerator:
             whitespace.
 
         Raises:
-            LLMError: If the local Ollama server can't be reached, the
-                model hasn't been pulled, or the response is empty or
-                unparseable.
+            LLMError: If the local Ollama server can't be reached, doesn't
+                have the model, rejects the request, doesn't answer within
+                the timeout, or returns an empty or unparseable response.
         """
         payload = json.dumps(
             {
                 "model": self._model,
                 "prompt": f"{_NARRATIVE_SYSTEM_PROMPT}\n\n{prompt}",
                 "stream": False,
+                "think": False,
                 "options": {"num_predict": self._max_tokens},
             }
         ).encode("utf-8")
@@ -511,29 +546,88 @@ class OllamaNarrativeGenerator:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
+        context: dict[str, object] = {"model": self._model, "host": self._host}
         try:
             # The scheme is limited to http(s) in __init__.
-            with urllib.request.urlopen(request, timeout=120) as resp:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
+            with urllib.request.urlopen(request, timeout=self._timeout) as resp:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
                 body = json.loads(resp.read().decode("utf-8"))
+        # HTTPError subclasses URLError, so it must be caught first: a 404
+        # means the server answered, not that it's unreachable.
+        except urllib.error.HTTPError as exc:
+            detail = _ollama_error_detail(exc)
+            context["ollama_error"] = detail
+            if exc.code == 404:
+                raise LLMError(
+                    f"Model '{self._model}' isn't downloaded on the Ollama server at "
+                    f"{self._host} -- run 'ollama pull {self._model}'",
+                    context=context,
+                ) from exc
+            raise LLMError(f"Ollama rejected the request (HTTP {exc.code}): {detail}", context=context) from exc
         except urllib.error.URLError as exc:
+            if isinstance(exc.reason, TimeoutError):
+                raise self._timeout_error(context) from exc
             raise LLMError(
                 f"Could not reach the local Ollama server at {self._host} -- "
                 "is it running? (see https://ollama.com)",
-                context={"model": self._model, "host": self._host},
+                context=context,
             ) from exc
+        # A timeout while reading the response isn't wrapped in URLError.
+        except TimeoutError as exc:
+            raise self._timeout_error(context) from exc
         except json.JSONDecodeError as exc:
-            raise LLMError(
-                "Ollama returned a response that could not be parsed",
-                context={"model": self._model, "host": self._host},
-            ) from exc
+            raise LLMError("Ollama returned a response that could not be parsed", context=context) from exc
 
         text = body.get("response")
         if not text:
+            context["done_reason"] = body.get("done_reason")
+            context["eval_count"] = body.get("eval_count")
+            if body.get("done_reason") != "length":
+                raise LLMError("Ollama returned an empty response", context=context)
+            if body.get("thinking"):
+                raise LLMError(
+                    f"The model spent its whole {self._max_tokens}-token limit reasoning "
+                    "and never answered -- it is a thinking model that ignored the "
+                    "request to switch thinking off",
+                    context=context,
+                )
             raise LLMError(
-                "Ollama returned an empty response -- has the model been pulled?",
-                context={"model": self._model, "host": self._host},
+                f"The model hit its {self._max_tokens}-token limit before writing an answer",
+                context=context,
             )
         return text.strip()
+
+    def _timeout_error(self, context: dict[str, object]) -> LLMError:
+        """Build the error for a server that didn't answer in time.
+
+        Args:
+            context: Diagnostic details for the error.
+
+        Returns:
+            An :class:`LLMError` naming the timeout and how to raise it.
+        """
+        return LLMError(
+            f"Ollama didn't finish within its {self._timeout:g}-second limit -- the model may be "
+            "loading or too slow for this machine; raise the limit with "
+            "'qv vault set-key --provider ollama --timeout SECONDS'",
+            context={**context, "timeout": self._timeout},
+        )
+
+
+def _ollama_error_detail(exc: urllib.error.HTTPError) -> str:
+    """Extract Ollama's error message from an HTTP error response.
+
+    Args:
+        exc: The HTTP error raised by ``urlopen``.
+
+    Returns:
+        The ``error`` field of Ollama's JSON body, or the HTTP reason
+        phrase if the body is missing or isn't Ollama's JSON shape.
+    """
+    try:
+        detail = json.loads(exc.read().decode("utf-8")).get("error")
+    except (OSError, ValueError, AttributeError):
+        detail = None
+    return str(detail) if detail else str(exc.reason)
 
 
 def create_narrative_generator(
@@ -542,6 +636,7 @@ def create_narrative_generator(
     api_key: str | None = None,
     model: str | None = None,
     host: str | None = None,
+    timeout: float | None = None,
 ) -> NarrativeGenerator:
     """Build a :class:`NarrativeGenerator` for the given provider id.
 
@@ -560,6 +655,8 @@ def create_narrative_generator(
             :attr:`ProviderSpec.default_model` when not given.
         host: Server override, used only by ``"ollama"`` to point at a
             non-default local server address.
+        timeout: Seconds to wait for a response, used only by
+            ``"ollama"``. Defaults to :data:`DEFAULT_OLLAMA_TIMEOUT`.
 
     Returns:
         A ready-to-use :class:`NarrativeGenerator`.
@@ -574,7 +671,7 @@ def create_narrative_generator(
         raise LLMError(f"Unknown LLM provider '{provider}' (known providers: {known})")
 
     resolved_model = model or spec.default_model
-    return spec.factory(api_key=api_key, model=resolved_model, host=host)
+    return spec.factory(api_key=api_key, model=resolved_model, host=host, timeout=timeout)
 
 
 def build_narrative_prompt(

@@ -306,6 +306,7 @@ class Api:
                 api_key=vault_data.api_key_for(vault_data.llm_provider),
                 model=vault_data.llm_model,
                 host=vault_data.llm_host,
+                timeout=vault_data.llm_timeout,
             )
             dossier_context = "\n".join(c.text for c in dossier.capabilities[:20])
             prompt = build_narrative_prompt(dossier_context, jd_text)

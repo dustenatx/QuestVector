@@ -14,6 +14,8 @@ record in [`docs/decisions/`](docs/decisions/).
 ## [Unreleased]
 
 ### Added
+- Opt-in live test of narrative generation against a local Ollama server (`tests/test_ollama_live.py`, on when `QV_OLLAMA_LIVE=1`), with a synthetic dossier, job description, and answer key in `tests/fixtures/ollama_live/`, fixture checks that always run, and a how-to in `docs/DEVELOPMENT.md`.
+- `qv vault set-key --timeout SECONDS`: how long to wait for a local Ollama response (default 300 seconds, up from a fixed 120).
 - `Security` GitHub Actions workflow: gitleaks (git history), Semgrep (static analysis), and pip-audit (dependency vulnerabilities) on every pull request and push to `main`; gitleaks and Semgrep results also go to the Security tab. ([ADR-0011](docs/decisions/0011-github-security-baseline.md))
 - `.github/dependabot.yml`: weekly version updates for pip and GitHub Actions, with a 7-day cooldown.
 - `SECURITY.md`: how to report a vulnerability privately.
@@ -35,6 +37,7 @@ record in [`docs/decisions/`](docs/decisions/).
 - mypy, pyflakes, and the type stubs mypy needs (`types-PyYAML`, `types-reportlab`) in the `[dev]` extra, so the spec's "mypy clean" claim can be reproduced.
 
 ### Changed
+- Ollama requests switch thinking off (`"think": false`), so thinking models such as qwen3.5 and gemma4 answer within the 600-token limit instead of spending it all on hidden reasoning. ([ADR-0012](docs/decisions/0012-ollama-thinking-off.md))
 - Every GitHub Action is pinned to a commit SHA (checkout v7.0.1, setup-python v7.0.0), and checkout no longer keeps the token in the working copy.
 - Template validation runs on every pull request, so it can be a required check.
 - The Ollama generator rejects a host that isn't an `http://` or `https://` URL, instead of passing it to urllib, which also opens `file://` URLs.
@@ -59,6 +62,11 @@ record in [`docs/decisions/`](docs/decisions/).
   failed validation. The bundled copies in `questvector/data/starter_templates/`
   are the only source. ([ADR-0009](docs/decisions/0009-bundled-starter-templates-only.md))
 - Committed `.DS_Store` files.
+
+### Fixed
+- A slow Ollama response raised a raw `TimeoutError`, which escaped the desktop app's narrative bridge; it now raises `LLMError` with the time limit and how to raise it.
+- A model that isn't downloaded was reported as "Could not reach the local Ollama server -- is it running?"; it now says the model isn't downloaded and to run `ollama pull`. Other HTTP errors from Ollama now include Ollama's own message.
+- An empty Ollama answer always asked "has the model been pulled?"; running out of tokens, including on hidden reasoning, now gets its own message.
 
 ## [1.0.0] - 2026-09-15
 
