@@ -38,6 +38,7 @@ record in [`docs/decisions/`](docs/decisions/).
 
 ### Changed
 - Ollama requests switch thinking off (`"think": false`), so thinking models such as qwen3.5 and gemma4 answer within the 600-token limit instead of spending it all on hidden reasoning. ([ADR-0012](docs/decisions/0012-ollama-thinking-off.md))
+- Backlog item 1 now records that negative statements in a dossier ("no hands-on Kubernetes") count as keyword matches, and that role titles in `##` headings may not count toward matching ("manager" reported as a gap under "Engineering Manager" headings).
 - Every GitHub Action is pinned to a commit SHA (checkout v7.0.1, setup-python v7.0.0), and checkout no longer keeps the token in the working copy.
 - Template validation runs on every pull request, so it can be a required check.
 - The Ollama generator rejects a host that isn't an `http://` or `https://` URL, instead of passing it to urllib, which also opens `file://` URLs.
