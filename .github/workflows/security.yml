@@ -4,7 +4,7 @@ name: "Security"
 # modeled on risk-trainer's CI (ADR-0011):
 #   - gitleaks:  secrets anywhere in the git history.
 #   - semgrep:   static analysis with the p/default rule set.
-#   - pip-audit: known vulnerabilities in the installed dependencies.
+#   - pip-audit: known vulnerabilities in the versions locked in uv.lock.
 # gitleaks and Semgrep also upload SARIF to the Security tab. Each scan keeps
 # its exit code, so a finding fails the check and blocks the merge.
 # CodeQL runs separately through GitHub's default setup, not a workflow file.
@@ -100,20 +100,25 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      # Python comes from .python-version.
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
-          python-version: "3.12"
-      # There is no lock file yet (backlog item 11), so this audits whatever
-      # versions pip resolves today from pyproject.toml's ranges, with every
-      # extra installed. A new advisory can fail a run with no code change.
-      - name: Install QuestVector with all extras
+          version: "0.13.1"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      # Audits every package in uv.lock (all extras and groups, every
+      # platform) rather than what one install resolves (ADR-0013). The list
+      # leaves out QuestVector itself, which isn't on PyPI; --strict would
+      # fail on it as unauditable. Platform markers are stripped so the
+      # macOS-only pyobjc packages are audited on this Linux runner too. The
+      # list is fully pinned, so --no-deps skips a second resolve. A new
+      # advisory against a locked version can still fail a run with no code
+      # change.
+      - name: Export the locked dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -e ".[dev,llm]" "pip-audit==2.10.1"
-      # Audits a frozen list of every installed package except QuestVector
-      # itself, which isn't on PyPI; --strict would fail on it as unauditable.
-      # The list is fully pinned, so --no-deps skips a second resolve.
-      - name: Audit installed dependencies
-        run: |
-          python -m pip freeze --exclude-editable > audit-requirements.txt
+          uv export --locked --all-extras --all-groups --no-emit-project --no-hashes \
+            --format requirements-txt | sed 's/ *;.*//' > audit-requirements.txt
+      - name: Audit locked dependencies
+        run: >-
+          uv run --locked --only-group audit
           pip-audit --strict --disable-pip --no-deps -r audit-requirements.txt

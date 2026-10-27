@@ -15,7 +15,7 @@ This repo describes **two** implementations of the QuestVector concept, but only
 |---|---|---|
 | **Status** | ✅ Implemented and runs today; unit-tested with simulated AI providers, not yet against a live one | 🚧 Design target only — no code exists yet |
 | Stack | Pure Python core + `qv` CLI + pywebview shell | React/Tailwind UI + Rust-compiled Wasm core (planned) |
-| Distribution | Clone/`pip install` and run locally | Will clone & run locally when built (see [Roadmap](#-roadmap-web-cockpit-not-yet-built) below) |
+| Distribution | Clone/`pip install` (Python 3.14) and run locally | Will clone & run locally when built (see [Roadmap](#-roadmap-web-cockpit-not-yet-built) below) |
 | Storage | Local filesystem + AES-256-GCM encrypted vault file | File System Access API + IndexedDB (planned) |
 
 **If you just want to use QuestVector today, skip straight to [Quickstart](#-quickstart) below — it's all Python.** The Web Cockpit section further down is a roadmap, not a tutorial.
@@ -30,14 +30,18 @@ The two implementations share the same *concept* — a local career dossier scor
 
 This is the only implementation that exists — there is nothing else to install or run.
 
+Requires **Python 3.14** (on macOS: `brew install python@3.14`).
+
 ```bash
 git clone https://github.com/dustenatx/QuestVector.git
 cd QuestVector
 
-python3.12 -m venv .venv
+python3.14 -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev,llm]"        # omit [llm] to skip all optional LLM SDKs
+python3.14 -m pip install -e ".[llm]"   # omit [llm] to skip all optional LLM SDKs
 ```
+
+Developing QuestVector itself? Contributors use [uv](https://docs.astral.sh/uv/) and the committed `uv.lock` instead; see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 `[llm]` installs the SDKs for all three cloud narrative-generation providers (Anthropic, OpenAI, Gemini) at once; install `[llm-anthropic]`, `[llm-openai]`, or `[llm-gemini]` individually if you only want one. The fourth supported provider, a local Ollama server, needs no extra install here at all — see "Optional LLM narrative generation" below.
 
@@ -66,9 +70,11 @@ python -m questvector.desktop.app   # native HUD window (requires a display)
 Matching is by keyword, so use the terms a job description would use (for example, both "Kubernetes" and "K8s" if you have used both names).
 
 ### Tests
+The test tools come with the contributor setup (uv; see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)):
 ```bash
-pytest                                          # 174 tests
-pytest --cov=questvector --cov-report=term-missing
+uv sync --all-extras
+uv run pytest                                   # 174 tests
+uv run pytest --cov=questvector --cov-report=term-missing
 ```
 13 of the tests exercise the cloud AI providers and need their SDKs installed (`[llm]`); without them those tests skip with the reason shown. One opt-in live test runs against a local Ollama server and is skipped unless you turn it on (see `docs/DEVELOPMENT.md`). GitHub Actions runs the suite, type checks, and lint on every pull request. Linting, type checks, and the full contributor workflow are in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 

@@ -20,8 +20,12 @@ Python core. Read these before changing anything:
   connection, an API key, or a display.
 - **Work on a branch and open a pull request to `main`.** The owner reviews
   and merges every change. Never push to `main` directly.
-- **Before every commit**, run and pass: `pytest`, `mypy questvector`,
-  `pyflakes questvector tests`. CI runs the same checks.
+- **Python 3.14 and uv (ADR-0013).** Set up with `uv sync --all-extras`.
+  Change dependencies with `uv add` or `uv lock` and commit `uv.lock` with
+  `pyproject.toml`; CI's `uv sync --locked` fails if they disagree.
+- **Before every commit**, run and pass: `uv run pytest`,
+  `uv run mypy questvector`, `uv run pyflakes questvector tests`. CI runs
+  the same checks.
 - **CI job names are required checks (ADR-0011).** The `main` ruleset,
   defined in `.github/rulesets/main.json`, requires each check by job name.
   Never rename, remove, or add a CI job, or change the test matrix, without
@@ -38,7 +42,7 @@ Python core. Read these before changing anything:
 
 ## Code conventions
 
-Python 3.12+, full type hints, Google-style docstrings, standard library
+Python 3.14, full type hints, Google-style docstrings, standard library
 first. Raise a `QuestVectorError` subclass, never a bare `except:`. Desktop
 bridge methods return `{"ok": ..., "data"|"error": ...}` and never raise. Add
 AI providers only through the registry in `questvector/core/llm.py`.

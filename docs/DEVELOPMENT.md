@@ -7,44 +7,67 @@ contributing a mission template only, see
 
 ## Setup
 
-Requires Python 3.12 or later.
+Requires Python 3.14 and [uv](https://docs.astral.sh/uv/) 0.13.1 or later
+([ADR-0013](decisions/0013-python-3-14-uv-lock.md)). On macOS with
+Homebrew: `brew install python@3.14 uv`. uv can also download Python 3.14
+itself.
 
 ```bash
 git clone https://github.com/dustenatx/QuestVector.git
 cd QuestVector
-python3.12 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -e ".[dev,llm]"
+uv sync --all-extras               # creates .venv from uv.lock
 ```
 
-`[dev]` installs pytest, mypy, pyflakes, and the type stubs mypy needs.
-`[llm]` installs the three cloud AI provider SDKs. Without it, the 13 tests
-that patch those SDKs skip with the reason shown; install it to run all 173
-that run by default (the live Ollama test is opt-in; see below). Running the desktop app (`python -m questvector.desktop.app`) also
-needs pywebview's platform dependencies and a display.
+`uv sync` installs the exact versions in `uv.lock`, plus the `dev`
+dependency group: pytest, mypy, pyflakes, and the type stubs mypy needs.
+`--all-extras` adds the three cloud AI provider SDKs (`[llm]`). Without it,
+the 13 tests that patch those SDKs skip with the reason shown; install it to
+run all 173 that run by default (the live Ollama test is opt-in; see below).
+Run commands with `uv run` (for example `uv run qv --version`), or
+`source .venv/bin/activate` first. Running the desktop app
+(`uv run python -m questvector.desktop.app`) also needs pywebview's platform
+dependencies and a display.
+
+### Dependencies and the lock file
+
+`pyproject.toml` holds the version ranges; `uv.lock` pins the exact versions
+for every platform. Commit both together. CI runs `uv sync --locked`, which
+fails if the lock doesn't match `pyproject.toml`.
+
+```bash
+uv add <package>                      # runtime dependency
+uv add --optional llm-openai <pkg>    # into an extra
+uv add --group dev <package>          # contributor tool
+uv lock --upgrade-package <package>   # move one package to its newest allowed version
+uv lock --check                       # is the lock current?
+```
+
+The lock only takes releases at least 7 days old (`exclude-newer` in
+`pyproject.toml`), the same cooldown Dependabot uses. Dependabot opens
+weekly pull requests that update `uv.lock`.
 
 ## Checks
 
 Run all of these before opening a pull request:
 
 ```bash
-pytest                                            # 174 tests: 173 run, 1 live test skipped (13 more skip without [llm])
-pytest --cov=questvector                          # fails below 90% line coverage
-mypy questvector                                  # type checks; expect "no issues found"
-pyflakes questvector tests                        # lint; expect no output
-qv template validate templates/boilerplate.qv-mission.yaml
+uv run pytest                                     # 174 tests: 173 run, 1 live test skipped (13 more skip without [llm])
+uv run pytest --cov=questvector                   # fails below 90% line coverage
+uv run mypy questvector                           # type checks; expect "no issues found"
+uv run pyflakes questvector tests                 # lint; expect no output
+uv run qv template validate templates/boilerplate.qv-mission.yaml
 ```
 
-What CI runs (`.github/workflows/`):
+What CI runs (`.github/workflows/`). Every job installs with uv from
+`uv.lock` on Python 3.14, on `ubuntu-24.04`:
 - **Tests** (`tests.yml`), on every pull request and push to `main`:
-  pytest with coverage on Python 3.12 and 3.13 with all extras (90% floor
-  enforced), pytest on Python 3.12 without the AI extras (proves the skip
-  path), and mypy plus pyflakes.
+  pytest with coverage with all extras (90% floor enforced), pytest without
+  the AI extras (proves the skip path), and mypy plus pyflakes.
 - **Template validation** (`template-validation.yml`), on every pull
   request and push to `main`.
 - **Security** (`security.yml`), on every pull request and push to `main`:
   gitleaks over the git history, Semgrep with the `p/default` rules, and
-  pip-audit over every installed dependency. gitleaks and Semgrep findings
+  pip-audit over every package in `uv.lock`. gitleaks and Semgrep findings
   also appear on the repository's Security tab.
 - **CodeQL**, through GitHub's default setup (repository settings, not a
   workflow file).
@@ -56,15 +79,32 @@ can't merge until they pass, and it merges by squash only.
 
 The ruleset lives in `.github/rulesets/main.json`. Renaming, adding, or
 removing a CI job means editing that file in the same pull request, then
-re-applying it after merge (the owner runs this; it needs admin rights):
+applying it to the live ruleset (the owner runs this; it needs admin
+rights):
 
 ```bash
 gh api repos/dustenatx/QuestVector/rulesets --jq '.[] | select(.name=="main") | .id'
 gh api -X PUT repos/dustenatx/QuestVector/rulesets/<id> --input .github/rulesets/main.json
 ```
 
+When a pull request renames a required check, the old name never reports,
+so that pull request can't merge under the old ruleset. The order is:
+1. Wait for the pull request's new checks to pass.
+2. Apply the pull request's `main.json` to the live ruleset (from the
+   branch, for example `git show origin/<branch>:.github/rulesets/main.json
+   | gh api -X PUT repos/dustenatx/QuestVector/rulesets/<id> --input -`).
+3. Merge the pull request.
+
+Other open pull requests then wait on the new names until rebased.
+
 To run the security scans locally (optional): `semgrep scan --config
-p/default --metrics=off`, and `pip-audit` inside your virtual environment.
+p/default --metrics=off`, and the same pip-audit run CI uses:
+
+```bash
+uv export --locked --all-extras --all-groups --no-emit-project --no-hashes \
+  --format requirements-txt | sed 's/ *;.*//' > audit-requirements.txt
+uv run --only-group audit pip-audit --strict --disable-pip --no-deps -r audit-requirements.txt
+```
 A false positive can be suppressed with an inline
 `# nosemgrep: <rule-id>` comment that states the reason.
 
@@ -91,7 +131,7 @@ in the job description, not the dossier) for scoring output by hand.
 3. Run:
 
    ```bash
-   QV_OLLAMA_LIVE=1 QV_OLLAMA_MODEL=gemma4:12b-it-q4_K_M pytest tests/test_ollama_live.py
+   QV_OLLAMA_LIVE=1 QV_OLLAMA_MODEL=gemma4:12b-it-q4_K_M uv run pytest tests/test_ollama_live.py
    ```
 
 Settings: `QV_OLLAMA_LIVE=1` turns the test on; `QV_OLLAMA_MODEL` (default

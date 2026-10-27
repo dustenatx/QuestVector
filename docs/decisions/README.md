@@ -22,5 +22,6 @@ and README. Their dates are the date each decision first appears in the repo.
 | [0008](0008-ci-results-in-run-summary.md) | CI reports results in the run summary, not a PR comment | Accepted | 2026-10-15 |
 | [0009](0009-bundled-starter-templates-only.md) | Bundled package templates are the only starter source | Accepted | 2026-10-15 |
 | [0010](0010-single-source-version.md) | `__version__` is the single source of the version | Accepted | 2026-09-15 |
-| [0011](0011-github-security-baseline.md) | GitHub security baseline modeled on risk-trainer | Accepted | 2026-10-18 |
+| [0011](0011-github-security-baseline.md) | GitHub security baseline modeled on risk-trainer | Accepted; partly superseded by 0013 | 2026-10-18 |
 | [0012](0012-ollama-thinking-off.md) | Ollama requests switch thinking off | Accepted | 2026-10-20 |
+| [0013](0013-python-3-14-uv-lock.md) | Python 3.14 only, managed with uv and a committed lock file | Accepted | 2026-10-27 |

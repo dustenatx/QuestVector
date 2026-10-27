@@ -251,7 +251,7 @@ Acceptance criteria use EARS-style phrasing.
 | Security | Secrets only in the encrypted vault (R16, R17). No secrets in the repository, logs, or bundles. Dependencies audited in CI (R20). |
 | Cost | $0: no paid API is required for any feature; Ollama is a complete alternative (G5). |
 | Accuracy | Generated text is traceable to the dossier (G4, R14). Public descriptions of the project match what has actually been tested. |
-| Portability | Python 3.12 or later on macOS, Windows, and Linux. The CLI needs no display; the desktop app needs pywebview's platform dependencies. |
+| Portability | Python 3.14 on macOS, Windows, and Linux ([ADR-0013](decisions/0013-python-3-14-uv-lock.md)). The CLI needs no display; the desktop app needs pywebview's platform dependencies. |
 | Maintainability | Full type hints; mypy and lint clean; Google-style docstrings on public code; one exception hierarchy with no bare `except:`; standard library first. |
 | Testability | Every module testable without a network, display, or API key. Coverage target to be set under backlog item 4. |
 | Accessibility | Desktop app usable by keyboard with visible focus; color never the only signal of match status. |

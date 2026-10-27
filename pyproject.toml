@@ -7,7 +7,7 @@ name = "questvector"
 dynamic = ["version"]
 description = "QuestVector — local-first career navigation & flight deck platform (Python desktop implementation)"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 license = { text = "MIT" }
 authors = [{ name = "Dusten Harrison" }]
 
@@ -29,13 +29,26 @@ llm-anthropic = ["anthropic>=0.40"]
 llm-openai = ["openai>=1.50"]
 llm-gemini = ["google-genai>=0.3"]
 llm = ["anthropic>=0.40", "openai>=1.50", "google-genai>=0.3"]
+
+[dependency-groups]
+# Contributor tools, not user install options (ADR-0013). uv installs the
+# `dev` group by default; `audit` holds pip-audit so the auditor's own
+# version is locked in uv.lock too.
 dev = [
     "pytest>=8.0", "pytest-mock>=3.14", "pytest-cov>=5.0",
     "mypy>=1.10", "pyflakes>=3.2", "types-PyYAML", "types-reportlab",
 ]
+audit = ["pip-audit==2.10.1"]
 
 [project.scripts]
 qv = "questvector.cli:main"
+
+[tool.uv]
+# The version CI pins in setup-uv; older uv may write an incompatible lock.
+required-version = ">=0.13.1"
+# Lock only releases at least 7 days old, matching Dependabot's cooldown, so
+# a compromised release has time to be caught and pulled first (ADR-0013).
+exclude-newer = "7 days"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
