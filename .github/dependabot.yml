@@ -1,4 +1,4 @@
-# Weekly version updates for Python dependencies and GitHub Actions
+# Weekly version updates for Python dependencies (uv.lock) and GitHub Actions
 # (ADR-0011). Security updates are enabled separately in the repository
 # settings and arrive as soon as an advisory is published.
 # Minor and patch bumps are grouped into one pull request per ecosystem;
@@ -7,7 +7,8 @@
 # compromised release has time to be caught and pulled first.
 version: 2
 updates:
-  - package-ecosystem: pip
+  # The uv ecosystem updates pyproject.toml and uv.lock together (ADR-0013).
+  - package-ecosystem: uv
     directory: "/"
     schedule:
       interval: weekly

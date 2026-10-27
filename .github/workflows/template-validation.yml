@@ -23,7 +23,7 @@ permissions:
 jobs:
   validate-templates:
     name: "Validate mission templates"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
@@ -32,17 +32,19 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      # Python comes from .python-version. activate-environment puts the
+      # project's .venv on PATH, so the step below can call `qv` directly.
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: pyproject.toml
+          version: "0.13.1"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          activate-environment: true
 
+      # A plain (non-editable) install with no dev tools, like a user's.
       - name: Install QuestVector
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .
+        run: uv sync --locked --no-dev --no-editable
 
       - name: Validate templates
         shell: bash

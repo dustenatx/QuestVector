@@ -12,6 +12,11 @@ dist/
 .coverage
 .coverage.*
 htmlcov/
+coverage.xml
+pytest-results.xml
+
+# pip-audit input written by the local audit command (docs/DEVELOPMENT.md)
+audit-requirements.txt
 
 # Virtual environments
 .venv/

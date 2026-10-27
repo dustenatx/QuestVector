@@ -207,10 +207,13 @@ as models.
 ## 11. Further topics to discuss
 - Release and versioning: tagged releases tied to the changelog (item 10),
   and how users get updates without a hosted service.
-- A dependency lock file, so pip-audit (item 2) checks fixed versions
-  rather than whatever pip resolves on the day it runs.
+- ✅ Done 27 Oct 2026 ([ADR-0013](decisions/0013-python-3-14-uv-lock.md)):
+  a dependency lock file, so pip-audit (item 2) checks fixed versions
+  rather than whatever pip resolves on the day it runs. Adopted with the
+  engineering baseline: Python 3.14 only, uv, a committed `uv.lock`
+  (7-day cooldown), and CI moved to uv.
 - Packaging and install experience across macOS, Windows, and Linux
-  (pywebview's platform dependencies; Python 3.12+ requirement).
+  (pywebview's platform dependencies; Python 3.14 requirement).
 - Privacy documentation: a short threat model for local data and the vault.
 - Accuracy of public claims: the README, spec, and resume wording ("142-test
   automated suite," "proof of concept") should stay consistent as this

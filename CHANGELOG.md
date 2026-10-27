@@ -34,9 +34,14 @@ record in [`docs/decisions/`](docs/decisions/).
 - `docs/PRD.md`, the first product requirements document (draft 0.1).
 - `docs/DEVELOPMENT.md`: developer setup, checks, conventions, and the release steps.
 - README "Fill in your dossier first" section explaining the dossier format, and a documentation index.
-- mypy, pyflakes, and the type stubs mypy needs (`types-PyYAML`, `types-reportlab`) in the `[dev]` extra, so the spec's "mypy clean" claim can be reproduced.
+- mypy, pyflakes, and the type stubs mypy needs (`types-PyYAML`, `types-reportlab`) in the dev tools (now the `dev` dependency group), so the spec's "mypy clean" claim can be reproduced.
 
 ### Changed
+- Python 3.14 only (`requires-python >=3.14`, `.python-version`), with uv for contributors and a committed `uv.lock` covering every platform, extra, and group. The lock only takes releases at least 7 days old (`exclude-newer`), matching Dependabot's cooldown. Users can still install with plain pip on Python 3.14. ([ADR-0013](docs/decisions/0013-python-3-14-uv-lock.md))
+- CI moved to uv: `astral-sh/setup-uv` v10.3.0 (pinned to a commit SHA, uv 0.13.1) and `uv sync --locked` in every job. Tests run on Python 3.14 only, full and minimal; the required checks are now `pytest (full, Python 3.14)` and `pytest (minimal, Python 3.14)` (`.github/rulesets/main.json` updated). The test and template-validation jobs run on `ubuntu-24.04` instead of `ubuntu-latest`.
+- pip-audit audits every package in `uv.lock` (all extras and groups, including macOS-only packages) instead of what one pip install resolves, and pip-audit itself is locked in an `audit` dependency group.
+- Dependabot updates Python dependencies through its `uv` ecosystem, so its pull requests update `uv.lock`.
+- The dev tools moved from the `[dev]` extra to a `dev` dependency group, which `uv sync` installs by default.
 - The default Ollama model is now `gemma4:12b-it-q4_K_M` instead of `llama3.1`: in [ADR-0012](docs/decisions/0012-ollama-thinking-off.md)'s comparison it invented facts in 0 of 5 runs against 3 of 5 for llama3.1:8b, and the owner's real-dossier run on 27 Oct 2026 backed the choice. It is an 8 GB download instead of 4.9 GB; anyone relying on the old default should run `ollama pull gemma4:12b-it-q4_K_M` or set `--model llama3.1`.
 - Backlog item 9 lists three follow-ups from the PR #7 review: a connection reset mid-response escapes as a raw error, `qv vault set-key` resets the timeout when `--timeout` is omitted, and the desktop prompt omits the template's tone.
 - Ollama requests switch thinking off (`"think": false`), so thinking models such as qwen3.5 and gemma4 answer within the 600-token limit instead of spending it all on hidden reasoning. ([ADR-0012](docs/decisions/0012-ollama-thinking-off.md))
@@ -59,6 +64,8 @@ record in [`docs/decisions/`](docs/decisions/).
   "Spec reference" notes, is the original design spec and is not in the repo.
 
 ### Removed
+- Support for Python 3.12 and 3.13.
+- The `[dev]` extra: `pip install -e ".[dev]"` no longer installs the test tools; use `uv sync` (see `docs/DEVELOPMENT.md`).
 - `tj-actions/changed-files` dependency from the workflow.
 - Seven stale starter templates in `templates/starter/` and
   `templates/boilerplate.yaml`, which used the pre-reconciliation schema and
