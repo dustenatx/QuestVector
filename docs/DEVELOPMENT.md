@@ -86,7 +86,8 @@ in the job description, not the dossier) for scoring output by hand.
 
 1. Install Ollama from [ollama.com](https://ollama.com/download) and start
    it (the app, or `ollama serve`).
-2. Pull a model, for example `ollama pull gemma4:12b-it-q4_K_M`.
+2. Pull a model, for example the default, `ollama pull gemma4:12b-it-q4_K_M`
+   (about an 8 GB download).
 3. Run:
 
    ```bash
@@ -94,14 +95,14 @@ in the job description, not the dossier) for scoring output by hand.
    ```
 
 Settings: `QV_OLLAMA_LIVE=1` turns the test on; `QV_OLLAMA_MODEL` (default
-`llama3.1`), `QV_OLLAMA_HOST` (default `http://localhost:11434`), and
+`gemma4:12b-it-q4_K_M`), `QV_OLLAMA_HOST` (default `http://localhost:11434`), and
 `QV_OLLAMA_TIMEOUT` in seconds (default 300) are optional. With the test
 turned on, an unreachable server or a model that isn't pulled fails the
 test rather than skipping it.
 
 Model choice: gemma4:12b-it-q4_K_M had the fewest invented facts in 5 runs
 on synthetic data with thinking off, 20 Oct 2026 (none, against 3 of 5 for
-both llama3.1:8b and qwen3.5:9b-q4_K_M), on Ollama 0.40.6 on a 24 GB Mac.
+both llama3.1:8b and qwen3.5:9b-q4_K_M), on Ollama 0.40.6 on a 24 GB Mac, and is the default since 27 Oct 2026.
 QuestVector switches thinking off for every Ollama model
 ([ADR-0012](decisions/0012-ollama-thinking-off.md)).
 

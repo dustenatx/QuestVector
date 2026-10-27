@@ -78,7 +78,7 @@ from questvector.exceptions import LLMError
 DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-5"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
-DEFAULT_OLLAMA_MODEL = "llama3.1"
+DEFAULT_OLLAMA_MODEL = "gemma4:12b-it-q4_K_M"
 DEFAULT_OLLAMA_HOST = "http://localhost:11434"
 # Seconds to wait for a local Ollama response. Generous because a local
 # model can be slow to load and run, and waiting costs nothing.
@@ -482,7 +482,7 @@ class OllamaNarrativeGenerator:
         """Initialize the generator with a model name and server address.
 
         Args:
-            model: The Ollama model tag to use (e.g. ``"llama3.1"``). Must
+            model: The Ollama model tag to use (e.g. ``"gemma4:12b-it-q4_K_M"``). Must
                 already be pulled locally via ``ollama pull <model>``.
             host: Base URL of the local Ollama server.
             max_tokens: Maximum tokens to generate per call.
@@ -495,7 +495,7 @@ class OllamaNarrativeGenerator:
         """
         if not model:
             raise LLMError(
-                "An Ollama model name is required (e.g. 'llama3.1') -- "
+                "An Ollama model name is required (e.g. 'gemma4:12b-it-q4_K_M') -- "
                 "run 'ollama pull <model>' first"
             )
         # urllib also opens file:// and ftp:// URLs; only HTTP reaches Ollama.
