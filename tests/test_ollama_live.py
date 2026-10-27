@@ -4,8 +4,8 @@ The live test is skipped unless ``QV_OLLAMA_LIVE=1`` is set, so the default
 suite and CI never need a running server (see ``docs/DEVELOPMENT.md``).
 Optional settings:
 
-* ``QV_OLLAMA_MODEL``: model tag, already pulled (default: the provider's
-  default model).
+* ``QV_OLLAMA_MODEL``: model tag, already pulled (default:
+  ``DEFAULT_OLLAMA_MODEL``, currently ``gemma4:12b-it-q4_K_M``).
 * ``QV_OLLAMA_HOST``: server URL (default: ``http://localhost:11434``).
 * ``QV_OLLAMA_TIMEOUT``: seconds to wait (default: the provider's default).
 

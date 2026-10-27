@@ -37,6 +37,7 @@ record in [`docs/decisions/`](docs/decisions/).
 - mypy, pyflakes, and the type stubs mypy needs (`types-PyYAML`, `types-reportlab`) in the `[dev]` extra, so the spec's "mypy clean" claim can be reproduced.
 
 ### Changed
+- The default Ollama model is now `gemma4:12b-it-q4_K_M` instead of `llama3.1`: in [ADR-0012](docs/decisions/0012-ollama-thinking-off.md)'s comparison it invented facts in 0 of 5 runs against 3 of 5 for llama3.1:8b, and the owner's real-dossier run on 27 Oct 2026 backed the choice. It is an 8 GB download instead of 4.9 GB; anyone relying on the old default should run `ollama pull gemma4:12b-it-q4_K_M` or set `--model llama3.1`.
 - Backlog item 9 lists three follow-ups from the PR #7 review: a connection reset mid-response escapes as a raw error, `qv vault set-key` resets the timeout when `--timeout` is omitted, and the desktop prompt omits the template's tone.
 - Ollama requests switch thinking off (`"think": false`), so thinking models such as qwen3.5 and gemma4 answer within the 600-token limit instead of spending it all on hidden reasoning. ([ADR-0012](docs/decisions/0012-ollama-thinking-off.md))
 - Backlog item 1 now records that negative statements in a dossier ("no hands-on Kubernetes") count as keyword matches, and that role titles in `##` headings may not count toward matching ("manager" reported as a gap under "Engineering Manager" headings).

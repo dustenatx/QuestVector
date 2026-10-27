@@ -144,9 +144,9 @@ test and its synthetic fixtures are in `tests/`, with a how-to in
 - Thinking models spent the whole token limit reasoning and returned
   nothing. Thinking is now switched off.
 
-Remaining: configure `qv vault set-key --provider ollama` and run narrative
-generation on the real dossier (the owner's step), and decide whether
-`DEFAULT_OLLAMA_MODEL` should change from llama3.1.
+Done 27 Oct 2026: the owner ran narrative generation on the real dossier,
+and `DEFAULT_OLLAMA_MODEL` changed from llama3.1 to gemma4:12b-it-q4_K_M,
+on ADR-0012's comparison and that run.
 
 Follow-ups found in the PR #7 review (20 Oct 2026), not yet fixed:
 - **Connection reset mid-response.** If the Ollama server stops partway
