@@ -204,14 +204,17 @@ Acceptance criteria use EARS-style phrasing.
 **R16 — Encrypted storage.** **Built.**
 - The system SHALL store provider settings and keys only in the encrypted
   vault, never in plain-text config files.
-- Planned check (backlog item 13): a test SHALL confirm keys never appear in
-  command output, error messages, or exported bundles.
+- Check: **Built** (backlog item 13). `tests/test_secrets_never_leak.py`
+  confirms API keys and the passphrase never appear in command output,
+  error messages, logs, exported bundles, or the vault file's bytes.
 - A wrong passphrase or tampered file SHALL produce a clear error, never
   garbage output.
 
-**R17 — Stronger key derivation.** **Planned** (backlog item 13).
-- Key derivation SHALL meet current OWASP guidance (PBKDF2-HMAC-SHA256 at
-  600,000 iterations or more, or scrypt or Argon2).
+**R17 — Stronger key derivation.** **Built** (backlog item 13,
+[ADR-0015](decisions/0015-pbkdf2-1m-iterations-vault-v2.md)).
+- Key derivation SHALL use PBKDF2-HMAC-SHA256 at no fewer than 600,000
+  iterations (OWASP minimum); new vaults use 1,000,000. Vault files record
+  and authenticate their key-derivation settings.
 - Existing vaults SHALL open and be re-encrypted with the new settings on
   next save, without the user re-entering keys.
 

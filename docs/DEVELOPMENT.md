@@ -21,8 +21,8 @@ uv sync --all-extras               # creates .venv from uv.lock
 `uv sync` installs the exact versions in `uv.lock`, plus the `dev`
 dependency group: pytest, mypy, pyflakes, and the type stubs mypy needs.
 `--all-extras` adds the three cloud AI provider SDKs (`[llm]`). Without it,
-the 13 tests that patch those SDKs skip with the reason shown; install it to
-run all 186 that run by default (the live Ollama test is opt-in; see below).
+the 16 tests that patch those SDKs skip with the reason shown; install it to
+run all 240 that run by default (the live Ollama test is opt-in; see below).
 Run commands with `uv run` (for example `uv run qv --version`), or
 `source .venv/bin/activate` first. Running the desktop app
 (`uv run python -m questvector.desktop.app`) also needs pywebview's platform
@@ -60,7 +60,7 @@ change the pin, and check `uv build` still succeeds with no warnings.
 Run all of these before opening a pull request:
 
 ```bash
-uv run pytest                                     # 187 tests: 186 run, 1 live test skipped (13 more skip without [llm])
+uv run pytest                                     # 241 tests: 240 run, 1 live test skipped (16 more skip without [llm])
 uv run pytest --cov=questvector                   # fails below 90% line coverage
 uv run mypy questvector                           # type checks; expect "no issues found"
 uv run pyflakes questvector tests                 # lint; expect no output
@@ -130,6 +130,18 @@ generation is tested against simulated providers by default. The one live
 test, against a local Ollama server, is opt-in and skipped otherwise (next
 section). A live test against a remote provider is still planned (backlog
 item 8).
+
+The vault's key derivation takes about 150 ms at its shipped 1,000,000
+iterations, so an autouse fixture in `tests/conftest.py` (`fast_kdf`)
+lowers the iteration count and the read minimum to 1,000 for every test.
+The shipped values in `questvector/core/vault.py` don't change; mark a
+test `@pytest.mark.real_kdf` to run it against them (the settings checks,
+one real round trip, the range checks, and the format 1 fixtures in
+`tests/fixtures/vault/` do). `tests/test_secrets_never_leak.py` checks that
+API keys and the passphrase never reach output, errors, logs, bundles, or
+the vault file; its markers are plain words, so secret scanners don't flag
+them. Keep any new synthetic secrets in that style, with no real provider
+prefix.
 
 ### Live test against a local Ollama
 

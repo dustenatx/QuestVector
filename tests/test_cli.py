@@ -188,7 +188,8 @@ def test_vault_set_key_stores_encrypted_key(
 ) -> None:
     workspace_dir = tmp_path / "ws"
     workspace_dir.mkdir()
-    responses = iter(["my-passphrase", "sk-my-api-key"])
+    # A new vault: passphrase, its confirmation, then the API key.
+    responses = iter(["my-passphrase", "my-passphrase", "sk-my-api-key"])
     monkeypatch.setattr(cli.getpass, "getpass", lambda *_args, **_kwargs: next(responses))
 
     exit_code = cli.main(["vault", "set-key", "--dir", str(workspace_dir), "--provider", "anthropic"])
@@ -204,16 +205,23 @@ def test_vault_set_key_ollama_needs_no_api_key_prompt(
 ) -> None:
     workspace_dir = tmp_path / "ws"
     workspace_dir.mkdir()
-    # Only the vault passphrase should be requested -- a second call would
-    # mean the CLI wrongly prompted for an API key Ollama doesn't need.
-    responses = iter(["my-passphrase"])
-    monkeypatch.setattr(cli.getpass, "getpass", lambda *_args, **_kwargs: next(responses))
+    # Only the vault passphrase and its confirmation (a new vault) should be
+    # requested -- a third prompt would mean the CLI wrongly asked for an
+    # API key Ollama doesn't need.
+    prompts: list[str] = []
+
+    def _getpass(prompt: str = "") -> str:
+        prompts.append(prompt)
+        return "my-passphrase"
+
+    monkeypatch.setattr(cli.getpass, "getpass", _getpass)
 
     exit_code = cli.main(
         ["vault", "set-key", "--dir", str(workspace_dir), "--provider", "ollama", "--model", "llama3.1"]
     )
 
     assert exit_code == 0
+    assert prompts == ["Vault passphrase: ", "Confirm vault passphrase: "]
     loaded = vault.load_vault(workspace_dir / ".questvector.vault", "my-passphrase")
     assert loaded.llm_provider == "ollama"
     assert loaded.llm_model == "llama3.1"
@@ -249,6 +257,70 @@ def test_vault_set_key_rejects_non_positive_timeout(
     assert exit_code == 1
     assert "--timeout must be a positive number" in capsys.readouterr().err
     assert not (workspace_dir / ".questvector.vault").exists()
+
+
+def test_vault_set_key_new_vault_rejects_mismatched_confirmation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    workspace_dir = tmp_path / "ws"
+    workspace_dir.mkdir()
+    # A third prompt (the API key) must never be reached.
+    responses = iter(["my-passphrase", "my-passphrse"])
+    monkeypatch.setattr(cli.getpass, "getpass", lambda *_args, **_kwargs: next(responses))
+
+    exit_code = cli.main(["vault", "set-key", "--dir", str(workspace_dir), "--provider", "anthropic"])
+
+    assert exit_code == 1
+    assert "Passphrases don't match; nothing was saved" in capsys.readouterr().err
+    assert not (workspace_dir / ".questvector.vault").exists()
+
+
+def test_vault_set_key_new_vault_rejects_empty_passphrase(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    workspace_dir = tmp_path / "ws"
+    workspace_dir.mkdir()
+    responses = iter([""])
+    monkeypatch.setattr(cli.getpass, "getpass", lambda *_args, **_kwargs: next(responses))
+
+    exit_code = cli.main(["vault", "set-key", "--dir", str(workspace_dir), "--provider", "ollama"])
+
+    assert exit_code == 1
+    assert "A new vault needs a non-empty passphrase" in capsys.readouterr().err
+    assert not (workspace_dir / ".questvector.vault").exists()
+
+
+def test_vault_set_key_existing_vault_asks_once(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    workspace_dir = tmp_path / "ws"
+    workspace_dir.mkdir()
+    vault.save_vault(workspace_dir / ".questvector.vault", "my-passphrase", vault.VaultData())
+    prompts: list[str] = []
+
+    def _getpass(prompt: str = "") -> str:
+        prompts.append(prompt)
+        return "my-passphrase"
+
+    monkeypatch.setattr(cli.getpass, "getpass", _getpass)
+
+    exit_code = cli.main(["vault", "set-key", "--dir", str(workspace_dir), "--provider", "ollama"])
+
+    assert exit_code == 0
+    assert prompts == ["Vault passphrase: "]
+
+
+def test_vault_set_key_existing_vault_with_empty_passphrase_still_saves(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Vaults created before empty passphrases were refused must keep working.
+    workspace_dir = tmp_path / "ws"
+    workspace_dir.mkdir()
+    vault.save_vault(workspace_dir / ".questvector.vault", "", vault.VaultData())
+    monkeypatch.setattr(cli.getpass, "getpass", lambda *_args, **_kwargs: "")
+
+    exit_code = cli.main(["vault", "set-key", "--dir", str(workspace_dir), "--provider", "ollama"])
+
+    assert exit_code == 0
+    assert vault.load_vault(workspace_dir / ".questvector.vault", "").llm_provider == "ollama"
 
 
 def test_vault_set_key_unknown_provider_rejected_by_argparse(tmp_path: Path) -> None:

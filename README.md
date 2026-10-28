@@ -94,14 +94,23 @@ python -m questvector.desktop.app   # native HUD window (requires a display)
 
 Matching is by keyword, so use the terms a job description would use (for example, both "Kubernetes" and "K8s" if you have used both names).
 
+### About the vault
+`qv vault set-key` (or the desktop Vault panel) stores your provider settings and API keys in `.questvector.vault` in the workspace, encrypted with a key derived from your passphrase ([ADR-0015](docs/decisions/0015-pbkdf2-1m-iterations-vault-v2.md)).
+- **A forgotten passphrase can't be recovered.** Delete the vault file and run `qv vault set-key` again.
+- **Creating a vault** needs a non-empty passphrase, and `qv vault set-key` asks for it twice. The desktop app has one field for now, so type it carefully there.
+- **Passphrases and keys are read with Python's `getpass`**, so they aren't shown or saved in shell history. There is no command-line flag or environment variable for them. If you pipe input into `qv` instead of typing at a terminal, `getpass` warns that input may be echoed.
+- **Upgrading from 1.1.0:** an older vault opens as before and is re-encrypted with the current settings the next time it is saved (any `qv vault set-key`). After that, QuestVector 1.1.0 can't open it.
+- **Saves are crash-safe:** the vault is written to a temporary file and then swapped in, so an interrupted save leaves the previous vault intact.
+- **File permissions:** on macOS and Linux the file is readable only by you. On Windows, who can read it depends on the folder's permissions; inside your user profile that is normally you and administrators.
+
 ### Tests
 The test tools come with the contributor setup (uv; see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)):
 ```bash
 uv sync --all-extras
-uv run pytest                                   # 187 tests
+uv run pytest                                   # 241 tests
 uv run pytest --cov=questvector --cov-report=term-missing
 ```
-13 of the tests exercise the cloud AI providers and need their SDKs installed (`[llm]`); without them those tests skip with the reason shown. One opt-in live test runs against a local Ollama server and is skipped unless you turn it on (see `docs/DEVELOPMENT.md`). GitHub Actions runs the suite, type checks, and lint on every pull request. Linting, type checks, and the full contributor workflow are in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
+16 of the tests exercise the cloud AI providers and need their SDKs installed (`[llm]`); without them those tests skip with the reason shown. One opt-in live test runs against a local Ollama server and is skipped unless you turn it on (see `docs/DEVELOPMENT.md`). GitHub Actions runs the suite, type checks, and lint on every pull request. Linting, type checks, and the full contributor workflow are in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Version
 ```bash
@@ -117,7 +126,7 @@ qv --version                                    # reads questvector.__version__ 
 * **Community Mission Templates:** Pre-built matching profiles for Senior DevOps, Cybersecurity, Platform Engineering, IT Project Management, and more (7 starter templates included).
 * **Native desktop app** (pywebview) themed to the Tactical Ops Flight Deck HUD, including a live G-Force gauge.
 * **PDF/DOCX export** of the dossier and match summary (reportlab / python-docx).
-* **Encrypted local vault** (AES-256-GCM) for provider settings and API keys.
+* **Encrypted local vault** (AES-256-GCM, key derived from your passphrase with PBKDF2-HMAC-SHA256 at 1,000,000 iterations) for provider settings and API keys. See [About the vault](#about-the-vault).
 * **Local-first storage:** Your dossier and career data live on disk, not in a vendor's database.
 * **Optional LLM narrative generation, four provider choices** — an explicit, user-triggered action (`qv export --narrative`, or the desktop UI's "Generate Narrative" button) that drafts a tailored resume summary. Pick one provider via `qv vault set-key --provider <name>`:
 

@@ -25,9 +25,11 @@ or drift. Known starting points:
   passing tests aren't real-world use. Resume and dossier wording should change
   in step: update the "published as a proof of concept" project line only
   after reviewing it in the Applying for Jobs project.
-- **Vault.** Review key derivation, file permissions, and how the passphrase or
-  key is supplied (`questvector/core/vault.py`). Known: PBKDF2-HMAC-SHA256 runs
-  390,000 iterations; OWASP's current guidance is 600,000. Raising it needs a
+- **Vault.** ✅ Done under item 13 (28 Oct 2026,
+  [ADR-0015](decisions/0015-pbkdf2-1m-iterations-vault-v2.md)). Review key
+  derivation, file permissions, and how the passphrase or key is supplied
+  (`questvector/core/vault.py`). Known: PBKDF2-HMAC-SHA256 ran 390,000
+  iterations; OWASP's current guidance is 600,000. Raising it needs a
   migration for existing vaults (see ADR-0002).
 - **LLM data flow.** Confirm exactly what dossier content is sent to remote
   providers and that the user sees it before it leaves the machine.
@@ -75,6 +77,15 @@ the workflow), and now `CHANGELOG.md`, `docs/PRD.md`, `docs/BACKLOG.md`, and
 `docs/decisions/`. Regenerate the PDF from its source with the current
 layout, and check Section 11's quality claims (mypy and pyflakes clean) at
 the same time, since CI doesn't verify them yet.
+- **Vault settings (found 28 Oct, item 13).** §3.1's table (page 5) still
+  says "PBKDF2-HMAC-SHA256, 390,000 iterations" and describes only a salt
+  and nonce per save. Update it per
+  [ADR-0015](decisions/0015-pbkdf2-1m-iterations-vault-v2.md): 1,000,000
+  iterations (600,000 minimum, 5,000,000 cap on read), format 2 with the KDF
+  name, iterations, and salt stored in the file and authenticated, format 1
+  files upgraded on next save, atomic saves, and Windows file access coming
+  from the folder's permissions. Pages 4 and 12 only say "AES-256-GCM",
+  which is still true.
 
 ## 4. Unit tests: CI and optional-extras failures
 ✅ Done 18 Oct 2026, except desktop interface testing, which moves to
@@ -237,6 +248,16 @@ derivation, GitHub Actions, Dependabot, ADRs, Keep a Changelog, and local LLMs.
 Useful as interview material and for the instructor pivot.
 
 ## 13. Vault hardening
+✅ Done 28 Oct 2026 ([ADR-0015](decisions/0015-pbkdf2-1m-iterations-vault-v2.md)):
+PBKDF2-HMAC-SHA256 at 1,000,000 iterations (Argon2id considered, not chosen);
+vault format 2 stores the KDF name, iterations, and salt and authenticates
+them; format 1 vaults open and upgrade on next save; atomic owner-only
+saves; a new vault refuses an empty passphrase and the CLI asks for it
+twice; `tests/test_secrets_never_leak.py` covers output, errors, logs,
+bundles, and the vault file, and SDK error messages are now redacted.
+Passphrase entry was already `getpass` only (no flag or environment
+variable). The desktop confirmation field is left for item 15.
+
 Separate from the broader vault review in item 1.
 - Raise key derivation to current OWASP guidance: PBKDF2-HMAC-SHA256 at
   600,000 iterations or more (now 390,000), or move to scrypt or Argon2.
@@ -314,6 +335,11 @@ Compare against risk-trainer's PRD requirements and look:
   Apply the same to a match: why each category scored as it did, which
   keywords matched, and what to add to the dossier.
 - **Errors:** plain-language messages; no stack traces shown.
+- **Vault passphrase confirmation (added 28 Oct, item 13):** the Vault panel
+  has one passphrase field, so creating a vault from the desktop app can't
+  catch a typo; `qv vault set-key` asks twice. Add a confirmation field
+  shown only when the workspace has no vault yet. An empty passphrase is
+  already refused for a new vault, from both the CLI and the desktop.
 - **Content Security Policy:** risk-trainer enforces a strict CSP with no
   inline scripts; set the same in `index.html`.
 - **Visual identity:** decided 16 Oct: keep the Flight Deck look, and share

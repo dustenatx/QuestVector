@@ -58,7 +58,7 @@ jobs:
           fi
 
       # The 90% floor (pyproject.toml) is enforced on the full install only.
-      # The minimal install skips the 13 SDK tests, so its coverage sits near
+      # The minimal install skips the 16 SDK tests, so its coverage sits near
       # the floor by design; its job is to prove the skip path works.
       - name: Run tests with coverage
         run: |
