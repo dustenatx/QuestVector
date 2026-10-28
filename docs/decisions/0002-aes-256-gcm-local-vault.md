@@ -1,6 +1,7 @@
 # 0002. AES-256-GCM encrypted local vault file
 
-- **Status:** Accepted
+- **Status:** Accepted; key-derivation settings superseded by
+  [0015](0015-pbkdf2-1m-iterations-vault-v2.md)
 - **Date:** 2026-09-09 (per-provider fields added 2026-09-15)
 
 ## Context
@@ -22,4 +23,6 @@ older vault files.
   recoverable.
 - **Revisit:** OWASP's current guidance for PBKDF2-HMAC-SHA256 is 600,000
   iterations. Raising it needs a migration path for existing vaults, and
-  scrypt or Argon2 are alternatives. Tracked under backlog item 1.
+  scrypt or Argon2 are alternatives. Done in
+  [0015](0015-pbkdf2-1m-iterations-vault-v2.md): 1,000,000 iterations, with
+  the settings recorded in the file (format 2).

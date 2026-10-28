@@ -223,6 +223,24 @@ PROVIDERS: dict[str, ProviderSpec] = {
 }
 
 
+def _redact(text: str, secret: str) -> str:
+    """Remove an API key from text that is about to reach the user.
+
+    SDK error messages are copied into :class:`LLMError` messages, which
+    the CLI prints and the desktop app displays; this keeps the key out of
+    them even if an SDK ever echoes it.
+
+    Args:
+        text: The message text.
+        secret: The API key to remove. An empty key leaves ``text`` as is.
+
+    Returns:
+        ``text`` with every occurrence of ``secret`` replaced by
+        ``[redacted]``.
+    """
+    return text.replace(secret, "[redacted]") if secret else text
+
+
 class NarrativeGenerator(Protocol):
     """Interface for anything that can turn a prompt into narrative text."""
 
@@ -274,6 +292,7 @@ class AnthropicNarrativeGenerator:
                 "'pip install questvector[llm-anthropic]' to enable Anthropic narrative generation"
             ) from exc
         self._client = anthropic.Anthropic(api_key=api_key)
+        self._api_key = api_key  # kept only to redact it from error messages
         self._model = model
         self._max_tokens = max_tokens
 
@@ -302,7 +321,10 @@ class AnthropicNarrativeGenerator:
                 messages=[{"role": "user", "content": prompt}],
             )
         except anthropic.APIError as exc:
-            raise LLMError(f"LLM API call failed: {exc}", context={"model": self._model}) from exc
+            raise LLMError(
+                f"LLM API call failed: {_redact(str(exc), self._api_key)}",
+                context={"model": self._model},
+            ) from exc
 
         if not response.content:
             raise LLMError("LLM returned an empty response", context={"model": self._model})
@@ -348,6 +370,7 @@ class OpenAINarrativeGenerator:
                 "'pip install questvector[llm-openai]' to enable OpenAI narrative generation"
             ) from exc
         self._client = openai.OpenAI(api_key=api_key)
+        self._api_key = api_key  # kept only to redact it from error messages
         self._model = model
         self._max_tokens = max_tokens
 
@@ -377,7 +400,10 @@ class OpenAINarrativeGenerator:
                 ],
             )
         except openai.OpenAIError as exc:
-            raise LLMError(f"LLM API call failed: {exc}", context={"model": self._model}) from exc
+            raise LLMError(
+                f"LLM API call failed: {_redact(str(exc), self._api_key)}",
+                context={"model": self._model},
+            ) from exc
 
         choices = response.choices
         content = choices[0].message.content if choices else None
@@ -417,6 +443,7 @@ class GeminiNarrativeGenerator:
                 "'pip install questvector[llm-gemini]' to enable Gemini narrative generation"
             ) from exc
         self._client = genai.Client(api_key=api_key)
+        self._api_key = api_key  # kept only to redact it from error messages
         self._model = model
         self._max_tokens = max_tokens
 
@@ -447,7 +474,10 @@ class GeminiNarrativeGenerator:
                 ),
             )
         except genai_errors.APIError as exc:
-            raise LLMError(f"LLM API call failed: {exc}", context={"model": self._model}) from exc
+            raise LLMError(
+                f"LLM API call failed: {_redact(str(exc), self._api_key)}",
+                context={"model": self._model},
+            ) from exc
 
         text = getattr(response, "text", None)
         if not text:

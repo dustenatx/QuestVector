@@ -45,7 +45,7 @@ from questvector.core.llm import PROVIDERS, build_narrative_prompt, create_narra
 from questvector.core.markdown_parser import parse_dossier
 from questvector.core.models import MissionTemplate
 from questvector.core.vault import VaultData, load_vault, update_vault
-from questvector.exceptions import LLMError, QuestVectorError
+from questvector.exceptions import LLMError, QuestVectorError, VaultError
 
 _VAULT_FILENAME = ".questvector.vault"
 
@@ -278,6 +278,8 @@ def _cmd_vault_set_key(args: argparse.Namespace) -> int:
     Raises:
         LLMError: If ``--provider`` isn't a known provider id, or
             ``--timeout`` isn't positive.
+        VaultError: If a new vault's passphrase is empty or its
+            confirmation doesn't match. Nothing is saved.
     """
     spec = PROVIDERS.get(args.provider)
     if spec is None:
@@ -289,6 +291,12 @@ def _cmd_vault_set_key(args: argparse.Namespace) -> int:
     workspace_dir = _resolve_workspace_dir(args.dir)
     vault_path = workspace_dir / _VAULT_FILENAME
     passphrase = getpass.getpass("Vault passphrase: ")
+    if not vault_path.exists():
+        # A new vault: a typo here would lock the user out, so ask twice.
+        if not passphrase:
+            raise VaultError("A new vault needs a non-empty passphrase; nothing was saved")
+        if getpass.getpass("Confirm vault passphrase: ") != passphrase:
+            raise VaultError("Passphrases don't match; nothing was saved")
 
     api_key = ""
     if spec.requires_api_key:

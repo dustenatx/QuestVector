@@ -13,7 +13,21 @@ record in [`docs/decisions/`](docs/decisions/).
 
 ## [Unreleased]
 
+**Vault upgrade:** a vault saved by this version can't be opened by QuestVector 1.1.0 or earlier. Older vaults still open and are upgraded the next time they are saved. ([ADR-0015](docs/decisions/0015-pbkdf2-1m-iterations-vault-v2.md))
+
+### Added
+- Vault file format 2: the key-derivation name, iteration count, and salt are stored in the file and authenticated as AES-GCM associated data, so changing any of them makes decryption fail. Iteration counts outside 600,000–5,000,000 are rejected before any key is derived. Format 1 vaults still open and are rewritten as format 2 on their next save, with no extra prompts; format 1 is never written again, and an unknown version gets a clear error. ([ADR-0015](docs/decisions/0015-pbkdf2-1m-iterations-vault-v2.md))
+- `qv vault set-key` asks for the passphrase twice when it creates a new vault, and saves nothing if the two don't match.
+- `tests/test_secrets_never_leak.py` (PRD R16): API keys and the passphrase never appear in command output, error messages, logs, exported PDF or DOCX bundles, or the vault file's bytes.
+- Format 1 vault fixtures in `tests/fixtures/vault/`, written by the released 1.1.0 code, and a `real_kdf` test marker; other tests run the vault at a low iteration count through a `tests/conftest.py` fixture, so the suite stays fast.
+
 ### Changed
+- Vault key derivation is PBKDF2-HMAC-SHA256 at 1,000,000 iterations (was 390,000; OWASP's minimum is 600,000). Unlock takes about 150 ms on an Apple M3. Argon2id was considered and not chosen.
+- Vault saves are atomic: written to an owner-only temporary file in the same folder, flushed, then renamed over the vault, so an interrupted save leaves the previous vault intact. Previously the file was written in place and restricted afterwards.
+- A new vault needs a non-empty passphrase (CLI and desktop). Existing vaults with an empty passphrase still open and save.
+- Error messages from the Anthropic, OpenAI, and Gemini SDKs have the API key replaced with `[redacted]` before QuestVector shows them.
+- `VaultData`'s `repr()` no longer includes the API keys.
+- ADR-0002's key-derivation settings are superseded by ADR-0015; PRD R16's check and R17 are Built; backlog items 1 (Vault) and 13 are done, item 3 records the spec's out-of-date vault table, and item 15 notes the desktop app's missing passphrase confirmation.
 - README: removed the note saying release files don't exist yet, now that 1.1.0 is published.
 
 ## [1.1.0] - 2026-10-28

@@ -6,7 +6,30 @@ from pathlib import Path
 
 import pytest
 
-from questvector.core import workspace
+from questvector.core import vault, workspace
+
+# Iteration count used while testing, so each vault save or load takes about
+# a millisecond instead of 150 ms. The shipped settings in vault.py are
+# unchanged; tests marked ``real_kdf`` run against them.
+FAST_KDF_ITERATIONS = 1_000
+
+
+@pytest.fixture(autouse=True)
+def fast_kdf(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Lower the vault's PBKDF2 iteration count for every test not marked ``real_kdf``.
+
+    Patches the write setting and the read floor together, so a vault saved
+    during a test also loads. The format 1 setting (390,000) is left alone,
+    so the v1 fixtures are read exactly as 1.1.0 wrote them.
+
+    Args:
+        request: The requesting test, checked for the ``real_kdf`` marker.
+        monkeypatch: Restores the real values after the test.
+    """
+    if request.node.get_closest_marker("real_kdf"):
+        return
+    monkeypatch.setattr(vault, "_KDF_ITERATIONS", FAST_KDF_ITERATIONS)
+    monkeypatch.setattr(vault, "_MIN_KDF_ITERATIONS", FAST_KDF_ITERATIONS)
 
 
 @pytest.fixture()
