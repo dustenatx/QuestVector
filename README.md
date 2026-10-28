@@ -34,8 +34,6 @@ Requires **Python 3.14** (on macOS: `brew install python@3.14`).
 
 ### Install from a release
 
-> Release files start with version 1.1.0. Until that release appears on the [Releases page](https://github.com/dustenatx/QuestVector/releases), use [Install from source](#install-from-source) below.
-
 Releases are marked **pre-release** while this is a proof of concept. Download the wheel (`questvector-<version>-py3-none-any.whl`) and `SHA256SUMS` from the [Releases page](https://github.com/dustenatx/QuestVector/releases), then check them in the folder you downloaded to:
 
 ```bash

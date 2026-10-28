@@ -13,6 +13,9 @@ record in [`docs/decisions/`](docs/decisions/).
 
 ## [Unreleased]
 
+### Changed
+- README: removed the note saying release files don't exist yet, now that 1.1.0 is published.
+
 ## [1.1.0] - 2026-10-28
 
 The first version published as release files: a pre-release on [GitHub Releases](https://github.com/dustenatx/QuestVector/releases). Installing it needs Python 3.14 (see Removed).
