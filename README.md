@@ -15,12 +15,12 @@ This repo describes **two** implementations of the QuestVector concept, but only
 |---|---|---|
 | **Status** | ✅ Implemented and runs today; unit-tested with simulated AI providers, not yet against a live one | 🚧 Design target only — no code exists yet |
 | Stack | Pure Python core + `qv` CLI + pywebview shell | React/Tailwind UI + Rust-compiled Wasm core (planned) |
-| Distribution | Clone/`pip install` (Python 3.14) and run locally | Will clone & run locally when built (see [Roadmap](#-roadmap-web-cockpit-not-yet-built) below) |
+| Distribution | Wheel from [GitHub Releases](https://github.com/dustenatx/QuestVector/releases), or clone; `pip install` (Python 3.14) and run locally | Will clone & run locally when built (see [Roadmap](#-roadmap-web-cockpit-not-yet-built) below) |
 | Storage | Local filesystem + AES-256-GCM encrypted vault file | File System Access API + IndexedDB (planned) |
 
 **If you just want to use QuestVector today, skip straight to [Quickstart](#-quickstart) below — it's all Python.** The Web Cockpit section further down is a roadmap, not a tutorial.
 
-**Distribution policy for this project: nothing is published externally.** No public domain, no hosted service, no npm-registry package, for either implementation, ever. Everything is cloned and run entirely from local files — a deliberate decision, not a temporary gap.
+**Distribution policy for this project: the only thing published is release files on this repository's [GitHub Releases](https://github.com/dustenatx/QuestVector/releases)** (a wheel, a source archive, and their checksums; [ADR-0014](docs/decisions/0014-github-releases.md)). No public domain, no hosted service, no PyPI or npm-registry package, for either implementation, ever. You download or clone it and run it entirely from local files — a deliberate decision, not a temporary gap.
 
 The two implementations share the same *concept* — a local career dossier scored against job descriptions via weighted mission templates — but are separate codebases in separate languages. The G-Force matching formula in the Python build is independently defined (documented in `questvector/core/matcher.py`) since the original spec never publishes a scoring algorithm; if the Web Cockpit is ever built, the two engines are not guaranteed to produce identical scores for identical inputs.
 
@@ -32,6 +32,31 @@ This is the only implementation that exists — there is nothing else to install
 
 Requires **Python 3.14** (on macOS: `brew install python@3.14`).
 
+### Install from a release
+
+> Release files start with version 1.1.0. Until that release appears on the [Releases page](https://github.com/dustenatx/QuestVector/releases), use [Install from source](#install-from-source) below.
+
+Releases are marked **pre-release** while this is a proof of concept. Download the wheel (`questvector-<version>-py3-none-any.whl`) and `SHA256SUMS` from the [Releases page](https://github.com/dustenatx/QuestVector/releases), then check them in the folder you downloaded to:
+
+```bash
+shasum -a 256 -c SHA256SUMS --ignore-missing     # the wheel matches the published checksum
+gh attestation verify questvector-1.1.0-py3-none-any.whl --repo dustenatx/QuestVector
+```
+
+The second check needs the [GitHub CLI](https://cli.github.com/), signed in (`gh auth login`). It confirms the wheel was built by this repository's release workflow from a tagged commit. Then install it in its own virtual environment:
+
+```bash
+python3.14 -m venv ~/.questvector-venv
+source ~/.questvector-venv/bin/activate
+python -m pip install "./questvector-1.1.0-py3-none-any.whl[llm]"   # omit [llm] to skip all optional LLM SDKs
+```
+
+For local, offline narrative generation instead of the cloud SDKs, install [Ollama](https://ollama.com/download); see "Optional LLM narrative generation" below.
+
+**Upgrade:** read the new version's notes in [`CHANGELOG.md`](CHANGELOG.md), download and verify the new wheel the same way, then, with the same virtual environment active, run `python -m pip install --upgrade "./questvector-<version>-py3-none-any.whl[llm]"`. Your workspace and vault live outside the virtual environment and aren't touched. A published release is never changed afterwards; fixes come as a new version.
+
+### Install from source
+
 ```bash
 git clone https://github.com/dustenatx/QuestVector.git
 cd QuestVector
@@ -41,11 +66,13 @@ source .venv/bin/activate
 python3.14 -m pip install -e ".[llm]"   # omit [llm] to skip all optional LLM SDKs
 ```
 
-Developing QuestVector itself? Contributors use [uv](https://docs.astral.sh/uv/) and the committed `uv.lock` instead; see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
+Update a source install with `git pull`. Developing QuestVector itself? Contributors use [uv](https://docs.astral.sh/uv/) and the committed `uv.lock` instead; see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 `[llm]` installs the SDKs for all three cloud narrative-generation providers (Anthropic, OpenAI, Gemini) at once; install `[llm-anthropic]`, `[llm-openai]`, or `[llm-gemini]` individually if you only want one. The fourth supported provider, a local Ollama server, needs no extra install here at all — see "Optional LLM narrative generation" below.
 
 `pip install` needs one-time internet access to fetch dependencies from PyPI, the same as any Python/Node/Rust project needs its package registry at install time — after that, everything below runs fully offline (with the single explicit exception noted under "Optional LLM narrative generation").
+
+### Run it
 
 ```bash
 qv launch --dir ~/career-workspace
@@ -73,7 +100,7 @@ Matching is by keyword, so use the terms a job description would use (for exampl
 The test tools come with the contributor setup (uv; see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)):
 ```bash
 uv sync --all-extras
-uv run pytest                                   # 174 tests
+uv run pytest                                   # 187 tests
 uv run pytest --cov=questvector --cov-report=term-missing
 ```
 13 of the tests exercise the cloud AI providers and need their SDKs installed (`[llm]`); without them those tests skip with the reason shown. One opt-in live test runs against a local Ollama server and is skipped unless you turn it on (see `docs/DEVELOPMENT.md`). GitHub Actions runs the suite, type checks, and lint on every pull request. Linting, type checks, and the full contributor workflow are in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).

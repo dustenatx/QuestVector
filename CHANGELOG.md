@@ -13,7 +13,15 @@ record in [`docs/decisions/`](docs/decisions/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-28
+
+The first version published as release files: a pre-release on [GitHub Releases](https://github.com/dustenatx/QuestVector/releases). Installing it needs Python 3.14 (see Removed).
+
 ### Added
+- `Release` GitHub Actions workflow (`.github/workflows/release.yml`), run only when a `v*` tag is pushed: it tests the tagged commit, checks it is on `main` and that the tag matches `__version__`, builds the wheel and sdist, writes `SHA256SUMS`, attests build provenance with `actions/attest` v4.2.2, and publishes a pre-release with this changelog section as its notes. The release is created as a draft and published only as the last step. ([ADR-0014](docs/decisions/0014-github-releases.md))
+- `.github/rulesets/tags.json`: a tag ruleset under which only the repository admin can create, move, or delete `v*` tags (applied by the owner after merge).
+- `tests/test_workflows.py`: every workflow pins its actions to a commit SHA with a version comment and checks out without persisting credentials; `release.yml` keeps its tag-only trigger, its permissions, and its draft-then-publish order.
+- README "Install from a release" and "Upgrade" instructions, with checksum and attestation checks; `docs/DEVELOPMENT.md` release steps for the owner.
 - Opt-in live test of narrative generation against a local Ollama server (`tests/test_ollama_live.py`, on when `QV_OLLAMA_LIVE=1`), with a synthetic dossier, job description, and answer key in `tests/fixtures/ollama_live/`, fixture checks that always run, and a how-to in `docs/DEVELOPMENT.md`.
 - `qv vault set-key --timeout SECONDS`: how long to wait for a local Ollama response (default 300 seconds, up from a fixed 120).
 - `Security` GitHub Actions workflow: gitleaks (git history), Semgrep (static analysis), and pip-audit (dependency vulnerabilities) on every pull request and push to `main`; gitleaks and Semgrep results also go to the Security tab. ([ADR-0011](docs/decisions/0011-github-security-baseline.md))
@@ -37,6 +45,9 @@ record in [`docs/decisions/`](docs/decisions/).
 - mypy, pyflakes, and the type stubs mypy needs (`types-PyYAML`, `types-reportlab`) in the dev tools (now the `dev` dependency group), so the spec's "mypy clean" claim can be reproduced.
 
 ### Changed
+- Distribution: ADR-0001 is narrowed by [ADR-0014](docs/decisions/0014-github-releases.md) so CI may publish release files to GitHub Releases; the app still makes no new network calls, and there is no PyPI package, hosting, or telemetry. The README distribution policy and the PRD non-goal say the same, and the PRD's definition of done now applies to the first full (non-pre-release) release instead of 1.1.0.
+- The build backend is pinned to `setuptools==84.2.1` (was `>=68.0`), so release builds don't pick up the newest setuptools of the day; the license metadata uses the SPDX form (`license = "MIT"`, `license-files`) that setuptools now requires.
+- `CLAUDE.md`: the CI-job rule covers jobs that run on pull requests (tag-only release jobs aren't required checks), and only the owner creates release tags.
 - Python 3.14 only (`requires-python >=3.14`, `.python-version`), with uv for contributors and a committed `uv.lock` covering every platform, extra, and group. The lock only takes releases at least 7 days old (`exclude-newer`), matching Dependabot's cooldown. Users can still install with plain pip on Python 3.14. ([ADR-0013](docs/decisions/0013-python-3-14-uv-lock.md))
 - CI moved to uv: `astral-sh/setup-uv` v10.3.0 (pinned to a commit SHA, uv 0.13.1) and `uv sync --locked` in every job. Tests run on Python 3.14 only, full and minimal; the required checks are now `pytest (full, Python 3.14)` and `pytest (minimal, Python 3.14)` (`.github/rulesets/main.json` updated). The test and template-validation jobs run on `ubuntu-24.04` instead of `ubuntu-latest`.
 - pip-audit audits every package in `uv.lock` (all extras and groups, including macOS-only packages) instead of what one pip install resolves, and pip-audit itself is locked in an `audit` dependency group.
@@ -64,8 +75,8 @@ record in [`docs/decisions/`](docs/decisions/).
   "Spec reference" notes, is the original design spec and is not in the repo.
 
 ### Removed
-- Support for Python 3.12 and 3.13.
-- The `[dev]` extra: `pip install -e ".[dev]"` no longer installs the test tools; use `uv sync` (see `docs/DEVELOPMENT.md`).
+- Support for Python 3.12 and 3.13: 1.1.0 installs only on Python 3.14. Anyone upgrading from 1.0.0 on an older Python needs a new 3.14 virtual environment.
+- The `[dev]` extra: `pip install -e ".[dev]"` no longer installs the test tools; contributors use `uv sync` (see `docs/DEVELOPMENT.md`).
 - `tj-actions/changed-files` dependency from the workflow.
 - Seven stale starter templates in `templates/starter/` and
   `templates/boilerplate.yaml`, which used the pre-reconciliation schema and
@@ -129,5 +140,6 @@ record in [`docs/decisions/`](docs/decisions/).
 - `tj-actions/changed-files` updated to v47 (Dependabot pull request #1 and a
   follow-up commit).
 
-[Unreleased]: https://github.com/dustenatx/QuestVector/compare/70f380d...HEAD
+[Unreleased]: https://github.com/dustenatx/QuestVector/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/dustenatx/QuestVector/compare/70f380d...v1.1.0
 [1.0.0]: https://github.com/dustenatx/QuestVector/commit/70f380d
