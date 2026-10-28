@@ -1,0 +1,168 @@
+name: "Release"
+
+# Publishes a GitHub Release when a v* tag is pushed (ADR-0014). Nothing else
+# triggers it: no pull requests, no branch pushes. Its jobs are therefore not
+# required checks and are not listed in .github/rulesets/main.json.
+# Only the repository admin can create v* tags (.github/rulesets/tags.json).
+#
+# Two jobs, so no repository code runs with write permissions:
+#   - build:   read-only. Tests, checks the tag, builds the wheel and sdist,
+#              and writes SHA256SUMS.
+#   - release: no checkout. Creates a draft release, attests the files, and
+#              publishes the draft as its last step. Releases are immutable
+#              once published, so a failure anywhere leaves at most a draft.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: "Build and test"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      # Full history, so the next step can check the tag is on main.
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check the tagged commit is on main
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::$GITHUB_REF_NAME points at $GITHUB_SHA, which is not on main."
+            exit 1
+          fi
+
+      # Python comes from .python-version.
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.13.1"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install QuestVector
+        run: uv sync --locked --all-extras
+
+      # The same gates a pull request passes, so a release can't ship a
+      # failing build.
+      - name: Run tests
+        run: uv run --no-sync pytest
+
+      - name: Type check (mypy)
+        run: uv run --no-sync mypy questvector
+
+      - name: Lint (pyflakes)
+        run: uv run --no-sync pyflakes questvector tests
+
+      - name: Check the tag matches __version__
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          package_version=$(uv run --no-sync python -c "import questvector; print(questvector.__version__)")
+          if [ "$tag_version" != "$package_version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match questvector.__version__ ($package_version)."
+            exit 1
+          fi
+
+      # The release notes are this version's section of CHANGELOG.md.
+      - name: Extract release notes
+        run: |
+          uv run --no-sync python - <<'EOF'
+          import os
+          import sys
+
+          version = os.environ["GITHUB_REF_NAME"].removeprefix("v")
+          heading = f"## [{version}]"
+          lines = open("CHANGELOG.md", encoding="utf-8").read().splitlines()
+          start = next((i for i, line in enumerate(lines) if line.startswith(heading)), None)
+          if start is None:
+              sys.exit(f"::error::CHANGELOG.md has no '{heading}' section.")
+          end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+          notes = "\n".join(lines[start + 1:end]).strip()
+          if not notes:
+              sys.exit(f"::error::The '{heading}' section of CHANGELOG.md is empty.")
+          with open("notes.md", "w", encoding="utf-8") as f:
+              f.write(notes + "\n")
+          EOF
+
+      - name: Build wheel and sdist
+        run: |
+          uv build --out-dir dist
+          wheels=$(find dist -maxdepth 1 -name '*.whl' | wc -l)
+          sdists=$(find dist -maxdepth 1 -name '*.tar.gz' | wc -l)
+          if [ "$wheels" -ne 1 ] || [ "$sdists" -ne 1 ]; then
+            echo "::error::Expected one wheel and one sdist; found $wheels and $sdists."
+            exit 1
+          fi
+
+      # Bare file names, so `shasum -a 256 -c SHA256SUMS` works in a download folder.
+      - name: Write SHA256SUMS
+        run: |
+          cd dist
+          sha256sum -- *.whl *.tar.gz > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Upload release files
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-files
+          path: |
+            dist/
+            notes.md
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    name: "Publish release"
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+
+    steps:
+      - name: Download release files
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-files
+
+      # A draft stays private and can still be deleted. --verify-tag stops gh
+      # from creating a tag that doesn't exist. --prerelease stays while the
+      # README banner says proof of concept (backlog item 1's exit condition).
+      - name: Create draft release
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          dist/*.whl dist/*.tar.gz dist/SHA256SUMS
+          --draft --verify-tag --prerelease
+          --title "QuestVector ${GITHUB_REF_NAME#v}"
+          --notes-file notes.md
+
+      # No predicate input, so the action writes SLSA build provenance.
+      - name: Attest build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: |
+            dist/*.whl
+            dist/*.tar.gz
+
+      # The only step that publishes. Must stay last.
+      - name: Publish release
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false

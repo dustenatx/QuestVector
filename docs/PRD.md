@@ -51,8 +51,9 @@ provider and explicitly ask for a narrative.
   without changes to core code.
 
 ### Non-goals
-- Hosting, accounts, telemetry, or any public distribution channel
-  (ADR-0001).
+- Hosting, accounts, telemetry, or any public distribution channel other
+  than release files on this repository's GitHub Releases (ADR-0001,
+  narrowed by ADR-0014).
 - Applying to jobs, scraping job boards, or tracking applications.
 - Semantic or embedding-based matching. Keyword matching is a deliberate
   choice for predictability (ADR-0006); revisit only through a new decision.
@@ -256,7 +257,7 @@ Acceptance criteria use EARS-style phrasing.
 | Testability | Every module testable without a network, display, or API key. Coverage target to be set under backlog item 4. |
 | Accessibility | Desktop app usable by keyboard with visible focus; color never the only signal of match status. |
 
-## 7. Definition of done for the next release (1.1.0)
+## 7. Definition of done for the first full (non-pre-release) release
 
 1. Every requirement marked Planned for backlog items 1, 4, 5, 8, 9, and 13 is
    built, or deferred in writing with its reason.

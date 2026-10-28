@@ -1,6 +1,7 @@
 # 0001. Local-only distribution; nothing published externally
 
-- **Status:** Accepted
+- **Status:** Accepted; narrowed by [0014](0014-github-releases.md)
+  (release files on GitHub Releases)
 - **Date:** 2026-09-15
 
 ## Context

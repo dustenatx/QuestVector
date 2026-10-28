@@ -28,11 +28,16 @@ Python core. Read these before changing anything:
   the same checks.
 - **CI job names are required checks (ADR-0011).** The `main` ruleset,
   defined in `.github/rulesets/main.json`, requires each check by job name.
-  Never rename, remove, or add a CI job, or change the test matrix, without
-  updating that file in the same pull request, and say in the PR
-  description that the ruleset must be re-applied when it merges.
+  Never rename, remove, or add a CI job that runs on pull requests, or
+  change the test matrix, without updating that file in the same pull
+  request, and say in the PR description that the ruleset must be
+  re-applied when it merges. Tag-only jobs (`release.yml`) are not
+  required checks and aren't listed there.
+- **Releases (ADR-0014).** Only the owner creates and pushes `v*` tags;
+  never create, push, or delete one.
 - **Pin actions to commit SHAs** with a version comment
   (`uses: owner/action@<sha> # vX.Y.Z`); never a bare tag.
+  `tests/test_workflows.py` enforces this for every workflow.
 - **Record every change** under `[Unreleased]` in `CHANGELOG.md`; add a
   record in `docs/decisions/` for any significant design choice; update the
   PRD when a requirement changes; mark backlog items done when finished.

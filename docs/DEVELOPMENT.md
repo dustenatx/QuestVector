@@ -22,7 +22,7 @@ uv sync --all-extras               # creates .venv from uv.lock
 dependency group: pytest, mypy, pyflakes, and the type stubs mypy needs.
 `--all-extras` adds the three cloud AI provider SDKs (`[llm]`). Without it,
 the 13 tests that patch those SDKs skip with the reason shown; install it to
-run all 173 that run by default (the live Ollama test is opt-in; see below).
+run all 186 that run by default (the live Ollama test is opt-in; see below).
 Run commands with `uv run` (for example `uv run qv --version`), or
 `source .venv/bin/activate` first. Running the desktop app
 (`uv run python -m questvector.desktop.app`) also needs pywebview's platform
@@ -46,12 +46,21 @@ The lock only takes releases at least 7 days old (`exclude-newer` in
 `pyproject.toml`), the same cooldown Dependabot uses. Dependabot opens
 weekly pull requests that update `uv.lock`.
 
+The build backend is outside the lock: `[build-system] requires` pins an
+exact setuptools version, so release builds are reproducible
+([ADR-0014](decisions/0014-github-releases.md)). Dependabot's uv ecosystem
+reads `build-system.requires`, so it is expected to propose setuptools bumps
+with the same 7-day cooldown; confirm that on its first cycle after
+1.1.0. To bump by hand, pick a release at least 7 days old from
+[PyPI's release history](https://pypi.org/project/setuptools/#history),
+change the pin, and check `uv build` still succeeds with no warnings.
+
 ## Checks
 
 Run all of these before opening a pull request:
 
 ```bash
-uv run pytest                                     # 174 tests: 173 run, 1 live test skipped (13 more skip without [llm])
+uv run pytest                                     # 187 tests: 186 run, 1 live test skipped (13 more skip without [llm])
 uv run pytest --cov=questvector                   # fails below 90% line coverage
 uv run mypy questvector                           # type checks; expect "no issues found"
 uv run pyflakes questvector tests                 # lint; expect no output
@@ -71,14 +80,22 @@ What CI runs (`.github/workflows/`). Every job installs with uv from
   also appear on the repository's Security tab.
 - **CodeQL**, through GitHub's default setup (repository settings, not a
   workflow file).
+- **Release** (`release.yml`), only when a `v*` tag is pushed; never on a
+  pull request. See [Releasing](#releasing).
 
 Results appear in each run's summary on the pull request's Checks tab. All
-of these are required checks on `main`
+of these except Release are required checks on `main`
 ([ADR-0011](decisions/0011-github-security-baseline.md)): a pull request
 can't merge until they pass, and it merges by squash only.
 
+`tests/test_workflows.py` checks every workflow pins its actions to a
+commit SHA with a version comment and checks out with
+`persist-credentials: false`, and that `release.yml` keeps its tag-only
+trigger, permissions, and draft-then-publish order.
+
 The ruleset lives in `.github/rulesets/main.json`. Renaming, adding, or
-removing a CI job means editing that file in the same pull request, then
+removing a CI job that runs on pull requests means editing that file in the
+same pull request, then
 applying it to the live ruleset (the owner runs this; it needs admin
 rights):
 
@@ -196,8 +213,55 @@ Design reasoning for these choices is in [`decisions/`](decisions/).
 
 ## Releasing
 
-1. Bump `__version__` in `questvector/__init__.py`; `pyproject.toml` reads it.
-2. In `CHANGELOG.md`, rename `[Unreleased]` to the new version and date, and
-   start a new `[Unreleased]` section.
-3. Merge to `main`. There is no publishing step: users update with
-   `git pull` (see [ADR-0001](decisions/0001-local-only-distribution.md)).
+Pushing a `v*` tag runs `.github/workflows/release.yml`, which tests the
+tagged commit, builds the wheel and sdist, attests them, and publishes a
+pre-release on GitHub Releases
+([ADR-0014](decisions/0014-github-releases.md)). Only the owner tags; the
+tag ruleset lets only the repository admin create, move, or delete `v*`
+tags.
+
+**Once, before the first release** (owner, admin rights):
+- Turn on immutable releases: Settings → General → Releases.
+- Apply the tag ruleset. The first time, create it; afterwards, update it
+  by id:
+
+  ```bash
+  gh api -X POST repos/dustenatx/QuestVector/rulesets --input .github/rulesets/tags.json
+  gh api repos/dustenatx/QuestVector/rulesets --jq '.[] | select(.name=="release-tags") | .id'
+  gh api -X PUT repos/dustenatx/QuestVector/rulesets/<id> --input .github/rulesets/tags.json
+  ```
+
+**Each release:**
+1. On a branch: in `CHANGELOG.md`, rename `[Unreleased]` to
+   `## [X.Y.Z] - YYYY-MM-DD`, start a new empty `[Unreleased]` above it, and
+   update the compare links at the bottom. Bump `__version__` in
+   `questvector/__init__.py` to `X.Y.Z` (`pyproject.toml` reads it). Open a
+   pull request and merge it.
+2. Tag the merged commit on `main` and push the tag:
+
+   ```bash
+   git switch main && git pull
+   git tag -a vX.Y.Z -m "QuestVector X.Y.Z"
+   git push origin vX.Y.Z
+   ```
+3. Watch the run: `gh run list --workflow release.yml`, then
+   `gh run watch <run-id>`. It fails if the commit isn't on `main`, a check
+   fails, the tag doesn't equal `__version__`, or `CHANGELOG.md` has no
+   section for the version.
+4. Check the result: `gh release view vX.Y.Z` should show a pre-release (not
+   a draft) with three files. Download them and verify:
+
+   ```bash
+   gh release download vX.Y.Z --dir /tmp/qv-X.Y.Z && cd /tmp/qv-X.Y.Z
+   shasum -a 256 -c SHA256SUMS
+   gh attestation verify questvector-X.Y.Z-py3-none-any.whl --repo dustenatx/QuestVector
+   gh attestation verify questvector-X.Y.Z.tar.gz --repo dustenatx/QuestVector
+   ```
+
+**If the run fails:**
+- Before the publish step, nothing is public. Delete the draft if one was
+  created (`gh release delete vX.Y.Z --yes`) and the tag
+  (`git push --delete origin vX.Y.Z`, then `git tag -d vX.Y.Z`), fix the
+  problem on a branch, merge, and tag again.
+- After publishing, the release can't be changed. Fix forward with a new
+  patch version.

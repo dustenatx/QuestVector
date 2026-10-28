@@ -205,8 +205,12 @@ as models.
   separate from the README, and a developer setup guide.
 
 ## 11. Further topics to discuss
-- Release and versioning: tagged releases tied to the changelog (item 10),
-  and how users get updates without a hosted service.
+- ✅ Done 28 Oct 2026 ([ADR-0014](decisions/0014-github-releases.md)):
+  release and versioning: tagged releases tied to the changelog (item 10),
+  and how users get updates without a hosted service. Pushing a `v*` tag
+  (owner only) publishes a pre-release on GitHub Releases with the wheel,
+  sdist, `SHA256SUMS`, and build provenance; notes come from the changelog.
+  First release: 1.1.0.
 - ✅ Done 27 Oct 2026 ([ADR-0013](decisions/0013-python-3-14-uv-lock.md)):
   a dependency lock file, so pip-audit (item 2) checks fixed versions
   rather than whatever pip resolves on the day it runs. Adopted with the
