@@ -274,6 +274,11 @@ Separate from the broader vault review in item 1.
 Discussion item, not yet a decision. Explore running QuestVector on AWS so it
 can be used from any device rather than only from a local install.
 
+**Decided 28 Oct 2026:** the self-host cloud kit isn't pursued for
+less-technical users. The browser app (item 16,
+[ADR-0016](decisions/0016-browser-app-static-pages.md)) serves them. A
+private deployment for the owner stays open for discussion.
+
 **Conflicts with an accepted decision.** ADR-0001 says nothing is hosted or
 published externally, ever, and the README and spec repeat it. Any hosted
 option needs a new ADR that supersedes or narrows ADR-0001, and the README,
@@ -309,9 +314,9 @@ Questions to settle:
 - **Security baseline.** Reuse risk-trainer's controls: least-privilege IAM,
   OIDC deploys with an approval gate, WAF and rate limits, budget alarms.
 
-Related: a browser-only alternative (static files, the core running in
-Pyodide, data kept in the browser) is being evaluated in
-[`docs/spikes/2026-10-browser-pyodide.md`](spikes/2026-10-browser-pyodide.md).
+Related: the browser-only app is item 16
+([ADR-0016](decisions/0016-browser-app-static-pages.md); evidence in
+[`docs/spikes/2026-10-browser-pyodide.md`](spikes/2026-10-browser-pyodide.md)).
 
 Career relevance: an AWS-hosted variant would show AWS architecture,
 Terraform, and security design on a second project, alongside risk-trainer.
@@ -319,6 +324,10 @@ Terraform, and security design on a second project, alongside risk-trainer.
 ## 15. UI/UX consistency with risk-trainer
 Review the desktop app's interface so it is consistent with risk-trainer and
 offers comparable features, adapted to a desktop app rather than a website.
+
+**Applies to both apps (28 Oct 2026):** this UI work covers the desktop app
+and the browser app (item 16). Build it once where the two can share the
+interface.
 
 Starting facts (quick scan, 16 Oct): the interface is about 550 lines of
 plain HTML, CSS, and JavaScript in `questvector/desktop/web/`, themed as the
@@ -358,4 +367,54 @@ Compare against risk-trainer's PRD requirements and look:
 Needs risk-trainer's front-end code (templates and CSS), not just its PRD,
 for a side-by-side comparison. Pairs with PRD R19 (Playwright tests for each
 tab) and backlog item 6.
+
+## 16. Browser-only app
+Decided 28 Oct 2026 ([ADR-0016](decisions/0016-browser-app-static-pages.md)):
+a browser app for less-technical users who can't install software. It's
+static files on this repository's GitHub Pages site, running the existing
+Python core in Pyodide, with data kept in the browser. The desktop app and
+CLI continue. Requirements: PRD §5.9, R22–R28. Evidence and measurements:
+[`docs/spikes/2026-10-browser-pyodide.md`](spikes/2026-10-browser-pyodide.md).
+
+Work in phases, one pull request each:
+- **(a) pywebview becomes a desktop extra.** Today it's a hard dependency,
+  and its sdist-only dependency `proxy-tools` blocks a normal micropip
+  install. Move it to an extra (for example `desktop`), and update the
+  install docs and how `qv` starts the desktop app. Needs an ADR.
+- **(b) Core API for the browser.**
+  - Bytes-in/bytes-out variants of export and the vault functions, next to
+    the path-based ones.
+  - A pluggable key-derivation function and cipher for the vault, so the
+    browser can use WebCrypto (R24) with the vault format unchanged.
+- **(c) App shell and storage adapter.**
+  - The page, Pyodide in a Web Worker (R22), and export libraries loaded on
+    demand (R25).
+  - The storage adapter: folder access on Chromium; upload, download and
+    browser-private storage elsewhere; persistent storage and backup prompts
+    (R23).
+  - Pinned, self-hosted, hash-checked assets (R27) and the strict CSP (R26).
+- **(d) Pyodide CI job.**
+  - Run the test suite under Pyodide, on Pyodide's own package versions.
+  - It's a new required check under ADR-0011: update
+    `.github/rulesets/main.json` in the same pull request, and re-apply the
+    ruleset after merging.
+- **(e) Deploy to GitHub Pages.**
+  - A tag-only workflow, on the same `v*` tags as releases, with the same
+    checks as `release.yml`.
+  - Check whether Pages compresses `application/wasm`.
+  - Add the frame check that refuses to render inside a frame. It's a
+    guardrail, not a control (ADR-0016).
+  - Update `SECURITY.md` when the site goes live, putting the site in scope
+    for reports.
+  - Owner's manual steps:
+    1. In the repository settings, set the Pages source to **GitHub
+       Actions**.
+    2. Limit the `github-pages` deployment environment to `v*` tags.
+- **(f) AI in the browser, after item 8.** A browser transport for the
+  providers, added through the registry, and the browser vault with
+  WebCrypto (R24, R28).
+
+Not measured yet, and worth checking before or during phase (c): first-load
+time on slower machines and slow connections, and Edge. Mobile isn't a goal
+until it's tested (PRD G8).
 

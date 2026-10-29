@@ -12,7 +12,7 @@ and README. Their dates are the date each decision first appears in the repo.
 
 | # | Decision | Status | Date |
 |---|---|---|---|
-| [0001](0001-local-only-distribution.md) | Local-only distribution; nothing published externally | Accepted; narrowed by 0014 | 2026-09-15 |
+| [0001](0001-local-only-distribution.md) | Local-only distribution; nothing published externally | Accepted; narrowed by 0014 and 0016 | 2026-09-15 |
 | [0002](0002-aes-256-gcm-local-vault.md) | AES-256-GCM encrypted local vault file | Accepted; KDF settings superseded by 0015 | 2026-09-09 |
 | [0003](0003-reconciled-template-schema.md) | One reconciled mission-template schema | Accepted | 2026-09-09 |
 | [0004](0004-data-driven-llm-provider-registry.md) | Data-driven LLM provider registry | Accepted | 2026-09-15 |
@@ -27,3 +27,4 @@ and README. Their dates are the date each decision first appears in the repo.
 | [0013](0013-python-3-14-uv-lock.md) | Python 3.14 only, managed with uv and a committed lock file | Accepted | 2026-10-27 |
 | [0014](0014-github-releases.md) | Release files published to GitHub Releases | Accepted | 2026-10-28 |
 | [0015](0015-pbkdf2-1m-iterations-vault-v2.md) | Vault key derivation: PBKDF2 at 1,000,000 iterations, settings stored in the file | Accepted | 2026-10-28 |
+| [0016](0016-browser-app-static-pages.md) | Browser app served as static files from GitHub Pages | Accepted | 2026-10-28 |
