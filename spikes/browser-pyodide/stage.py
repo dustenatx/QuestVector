@@ -50,6 +50,21 @@ PYODIDE_PACKAGES = (
     "charset-normalizer",
     "typing-extensions",
 )
+# The exact files those packages and their dependencies resolve to in
+# pyodide-lock.json. Pinned so the download allowlist below is complete;
+# staging stops if the lock ever asks for anything else.
+PYODIDE_PACKAGE_FILES = (
+    "cffi-2.0.0-cp314-cp314-pyemscripten_2026_0_wasm32.whl",
+    "charset_normalizer-3.4.7-py3-none-any.whl",
+    "cryptography-47.0.0-cp314-abi3-pyemscripten_2026_0_wasm32.whl",
+    "lxml-6.1.3-cp314-cp314-pyemscripten_2026_0_wasm32.whl",
+    "micropip-0.11.1-py3-none-any.whl",
+    "pillow-12.2.0-cp314-cp314-pyemscripten_2026_0_wasm32.whl",
+    "pycparser-3.0-py3-none-any.whl",
+    "pyyaml-6.0.3-cp314-cp314-pyemscripten_2026_0_wasm32.whl",
+    "six-1.17.0-py2.py3-none-any.whl",
+    "typing_extensions-4.15.0-py3-none-any.whl",
+)
 # Pure-Python wheels from PyPI that Pyodide doesn't build, with their PyPI
 # sha256 digests.
 PYPI_WHEELS = {
@@ -62,6 +77,14 @@ PYPI_WHEELS = {
         "3fd478f3250fbbbfd3b94fe1e985955737c145627498896a8a6bf81f4baf66c7",
     ),
 }
+# Every URL this script may download, exactly. _fetch refuses anything else.
+ALLOWED_URLS = frozenset(
+    {
+        PYODIDE_NPM_TARBALL,
+        *(PYODIDE_PACKAGES_URL + name for name in PYODIDE_PACKAGE_FILES),
+        *(url for url, _sha256 in PYPI_WHEELS.values()),
+    }
+)
 PAGE_FILES = ("index.html", "core.html", "core.js", "steps.py", "files.html", "files.js", "spike.css")
 
 HERE = Path(__file__).resolve().parent
@@ -84,10 +107,22 @@ def _fetch(url: str, cache: Path) -> bytes:
 
     Returns:
         The file's bytes.
+
+    Raises:
+        SystemExit: If ``url`` isn't HTTPS or isn't exactly one of
+            ``ALLOWED_URLS``.
     """
+    # Checked before the cache too, so a cached file is only ever used for
+    # an allowed URL.
+    if not url.startswith("https://"):
+        raise SystemExit(f"refusing a non-HTTPS download: {url}")
+    if url not in ALLOWED_URLS:
+        raise SystemExit(f"refusing a download that isn't in the pinned allowlist: {url}")
     if cache.exists():
         return cache.read_bytes()
-    with urllib.request.urlopen(url, timeout=120) as response:
+    # url is an exact match in the pinned ALLOWED_URLS above, and the caller
+    # hash-verifies every download before using it.
+    with urllib.request.urlopen(url, timeout=120) as response:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
         data: bytes = response.read()
     cache.parent.mkdir(parents=True, exist_ok=True)
     cache.write_bytes(data)

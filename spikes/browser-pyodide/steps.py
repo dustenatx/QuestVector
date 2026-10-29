@@ -13,6 +13,7 @@ import platform
 import sys
 import time
 import traceback
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
@@ -229,21 +230,36 @@ def run(name: str, *args: Any) -> str:
     """Run a step by name and return its result as JSON, catching any failure.
 
     Args:
-        name: A function in this module.
+        name: A key of ``_STEPS``.
         *args: Its arguments.
 
     Returns:
         JSON: ``{"ok": true, "data": ...}`` or ``{"ok": false, "error": ..., "traceback": ...}``.
     """
     try:
-        return json.dumps({"ok": True, "data": globals()[name](*args)})
+        return json.dumps({"ok": True, "data": _STEPS[name](*args)})
     except BaseException as exc:  # noqa: BLE001 -- reported to the page
         return json.dumps({"ok": False, "error": f"{type(exc).__name__}: {exc}", "traceback": traceback.format_exc()})
 
 
 async def run_async(name: str, *args: Any) -> str:
-    """Async counterpart of :func:`run`, for the micropip steps."""
+    """Async counterpart of :func:`run`, for the micropip steps (keys of ``_ASYNC_STEPS``)."""
     try:
-        return json.dumps({"ok": True, "data": await globals()[name](*args)})
+        return json.dumps({"ok": True, "data": await _ASYNC_STEPS[name](*args)})
     except BaseException as exc:  # noqa: BLE001 -- reported to the page
         return json.dumps({"ok": False, "error": f"{type(exc).__name__}: {exc}", "traceback": traceback.format_exc()})
+
+
+# The only steps the page can run by name.
+_STEPS: dict[str, Callable[..., dict[str, Any]]] = {
+    "probe_platform": probe_platform,
+    "step_parse": step_parse,
+    "step_match": step_match,
+    "step_export": step_export,
+    "step_vault": step_vault,
+    "step_kdf": step_kdf,
+}
+_ASYNC_STEPS: dict[str, Callable[..., Awaitable[dict[str, Any]]]] = {
+    "install": install,
+    "probe_full_install": probe_full_install,
+}
