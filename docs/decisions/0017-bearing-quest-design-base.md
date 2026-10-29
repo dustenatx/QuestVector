@@ -69,6 +69,6 @@ accent color is still to be chosen.
 - **The contrast test is added with the first UI pull request,** together
   with the generated CSS custom properties.
 - **One stylesheet** serves the pywebview window and the browser app.
+- Labels stay themed (decided 29 Oct 2026, backlog item 15).
 - **Still open:** QuestVector's accent color, to be chosen and
-  contrast-checked in both themes before UI code; and whether labels are
-  themed, plain, or both (backlog item 15).
+  contrast-checked in both themes before UI code.

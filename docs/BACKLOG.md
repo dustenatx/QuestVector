@@ -376,11 +376,8 @@ Compare against risk-trainer's PRD requirements and look:
   layout behavior, help pages, error handling, CSP), not its visual design.
   Updated 29 Oct by [ADR-0017](decisions/0017-bearing-quest-design-base.md):
   the Flight Deck motif now sits on the Bearing Quest base.
-- **Terminology (undecided, review later; still open after ADR-0017,
-  pending mockups):** the HUD vocabulary
-  ("Sync-AST," "Lock-On Red," "Afterburner Amber," "G-Force") may confuse
-  new users. Make quick mockups of two or three labeling options (themed
-  only, plain only, plain with themed names secondary) and decide from them.
+- **Terminology:** Decided 29 Oct 2026: themed labels (Sync-AST, G-Force,
+  Vault, mission template), chosen after the screens mockup.
 
 Needs risk-trainer's front-end code (templates and CSS), not just its PRD,
 for a side-by-side comparison. Pairs with PRD R19 (Playwright tests for each

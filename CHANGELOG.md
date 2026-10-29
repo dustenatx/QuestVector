@@ -25,7 +25,8 @@ record in [`docs/decisions/`](docs/decisions/).
 - Format 1 vault fixtures in `tests/fixtures/vault/`, written by the released 1.1.0 code, and a `real_kdf` test marker; other tests run the vault at a low iteration count through a `tests/conftest.py` fixture, so the suite stays fast.
 
 ### Changed
-- Backlog item 15 (UI/UX) is re-planned around ADR-0017: choose and contrast-check QuestVector's accent, then build a screens mockup from the design system before the browser app shell, with one stylesheet for both apps. Item 16 phase (c) points to item 15 for the look. The labeling question (themed or plain) is still open.
+- Backlog item 15 (UI/UX) is re-planned around ADR-0017: choose and contrast-check QuestVector's accent, then build a screens mockup from the design system before the browser app shell, with one stylesheet for both apps. Item 16 phase (c) points to item 15 for the look.
+- Backlog item 15's labeling question is decided: labels stay themed (Sync-AST, G-Force, Vault, mission template), chosen after the screens mockup. Recorded in item 15 and [ADR-0017](docs/decisions/0017-bearing-quest-design-base.md)'s consequences. Docs only.
 - Vault key derivation is PBKDF2-HMAC-SHA256 at 1,000,000 iterations (was 390,000; OWASP's minimum is 600,000). Unlock takes about 150 ms on an Apple M3. Argon2id was considered and not chosen.
 - Vault saves are atomic: written to an owner-only temporary file in the same folder, flushed, then renamed over the vault, so an interrupted save leaves the previous vault intact. Previously the file was written in place and restricted afterwards.
 - A new vault needs a non-empty passphrase (CLI and desktop). Existing vaults with an empty passphrase still open and save.
