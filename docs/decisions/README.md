@@ -28,3 +28,4 @@ and README. Their dates are the date each decision first appears in the repo.
 | [0014](0014-github-releases.md) | Release files published to GitHub Releases | Accepted | 2026-10-28 |
 | [0015](0015-pbkdf2-1m-iterations-vault-v2.md) | Vault key derivation: PBKDF2 at 1,000,000 iterations, settings stored in the file | Accepted | 2026-10-28 |
 | [0016](0016-browser-app-static-pages.md) | Browser app served as static files from GitHub Pages | Accepted | 2026-10-28 |
+| [0017](0017-bearing-quest-design-base.md) | Adopt the Bearing Quest design base | Accepted | 2026-10-29 |

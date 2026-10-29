@@ -325,6 +325,22 @@ Terraform, and security design on a second project, alongside risk-trainer.
 Review the desktop app's interface so it is consistent with risk-trainer and
 offers comparable features, adapted to a desktop app rather than a website.
 
+**Design base (29 Oct 2026, [ADR-0017](decisions/0017-bearing-quest-design-base.md)):**
+QuestVector uses the Bearing Quest design system as its shared base (color
+tokens, fonts, logo, accent and data-color rules, contrast test) and keeps
+the Flight Deck instrument-panel motif. Its own accent color is still to be
+chosen.
+
+Before any UI code:
+1. Choose QuestVector's accent and contrast-check it in both themes.
+2. Build a screens mockup from the design system, before the item 16
+   phase (c) app shell.
+3. The desktop (pywebview) window and the browser app share one
+   stylesheet.
+4. The first UI pull request adds the token contrast test (WCAG 2.2 AA;
+   3:1 for focus rings and control outlines) and the CSS custom properties
+   generated from the design system's `tokens.json`.
+
 **Applies to both apps (28 Oct 2026):** this UI work covers the desktop app
 and the browser app (item 16). Build it once where the two can share the
 interface.
@@ -358,8 +374,10 @@ Compare against risk-trainer's PRD requirements and look:
 - **Visual identity:** decided 16 Oct: keep the Flight Deck look, and share
   conventions with risk-trainer where they make sense (accessibility,
   layout behavior, help pages, error handling, CSP), not its visual design.
-  Record this as an ADR when the work starts.
-- **Terminology (undecided, review later):** the HUD vocabulary
+  Updated 29 Oct by [ADR-0017](decisions/0017-bearing-quest-design-base.md):
+  the Flight Deck motif now sits on the Bearing Quest base.
+- **Terminology (undecided, review later; still open after ADR-0017,
+  pending mockups):** the HUD vocabulary
   ("Sync-AST," "Lock-On Red," "Afterburner Amber," "G-Force") may confuse
   new users. Make quick mockups of two or three labeling options (themed
   only, plain only, plain with themed names secondary) and decide from them.
@@ -393,6 +411,7 @@ Work in phases, one pull request each:
     browser-private storage elsewhere; persistent storage and backup prompts
     (R23).
   - Pinned, self-hosted, hash-checked assets (R27) and the strict CSP (R26).
+  - The look: see item 15 ([ADR-0017](decisions/0017-bearing-quest-design-base.md)).
 - **(d) Pyodide CI job.**
   - Run the test suite under Pyodide, on Pyodide's own package versions.
   - It's a new required check under ADR-0011: update
