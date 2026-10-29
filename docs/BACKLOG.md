@@ -309,6 +309,10 @@ Questions to settle:
 - **Security baseline.** Reuse risk-trainer's controls: least-privilege IAM,
   OIDC deploys with an approval gate, WAF and rate limits, budget alarms.
 
+Related: a browser-only alternative (static files, the core running in
+Pyodide, data kept in the browser) is being evaluated in
+[`docs/spikes/2026-10-browser-pyodide.md`](spikes/2026-10-browser-pyodide.md).
+
 Career relevance: an AWS-hosted variant would show AWS architecture,
 Terraform, and security design on a second project, alongside risk-trainer.
 

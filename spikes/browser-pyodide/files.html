@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QV spike: files</title>
+  <link rel="stylesheet" href="spike.css">
+</head>
+<body>
+  <main>
+    <h1>Files in the browser</h1>
+    <p class="note">Spike page. Use a folder of synthetic files only, for example a copy of tests/fixtures/ollama_live.</p>
+
+    <h2>What this browser supports</h2>
+    <table><tbody id="support"></tbody></table>
+
+    <h2>A. Open a folder (File System Access API)</h2>
+    <div class="row">
+      <button id="pick-folder" type="button">Open folder…</button>
+      <button id="write-back" type="button" disabled>Write qv-test.txt into the folder</button>
+    </div>
+    <pre id="folder-log">Not started.</pre>
+
+    <h2>B. Fallback: upload and download</h2>
+    <div class="row">
+      <label class="button">Choose files… <input id="pick-files" type="file" multiple accept=".md,.txt,.json" hidden></label>
+      <label class="button">Choose a folder… <input id="pick-dir" type="file" webkitdirectory hidden></label>
+      <button id="download" type="button">Download qv-test.txt</button>
+    </div>
+    <pre id="upload-log">Not started.</pre>
+  </main>
+  <script type="module" src="files.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QV spike: core in Pyodide</title>
+  <link rel="stylesheet" href="spike.css">
+</head>
+<body>
+  <main>
+    <h1>QuestVector core in Pyodide</h1>
+    <p class="note">Spike page. Synthetic fixtures only; nothing leaves this machine. <span id="mode"></span></p>
+    <p id="status">Running… the vault and KDF steps can freeze the page for several seconds.</p>
+    <table>
+      <thead><tr><th>Step</th><th>Result</th><th class="num">ms</th><th class="num">frozen ms</th><th>Detail</th></tr></thead>
+      <tbody id="steps"></tbody>
+    </table>
+    <div id="downloads" class="row"></div>
+    <div class="row"><button id="copy" type="button">Copy JSON</button></div>
+    <pre id="report"></pre>
+  </main>
+  <script type="module" src="core.js"></script>
+</body>
+</html>
