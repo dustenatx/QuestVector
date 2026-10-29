@@ -1,0 +1,17 @@
+/* Shared styles for the spike pages. Kept in a file, not inline, so the strict CSP (style-src 'self') applies. */
+:root { color-scheme: light dark; --ok: #10b981; --fail: #ef4444; --muted: #888; }
+body { font: 15px/1.5 system-ui, sans-serif; margin: 0; padding: 16px; }
+main { max-width: 1000px; margin: 0 auto; }
+h1 { font-size: 1.4rem; }
+h2 { font-size: 1.1rem; margin-top: 1.5rem; }
+.note { color: var(--muted); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #8884; vertical-align: top; }
+td code { word-break: break-word; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.ok td:nth-child(2) { color: var(--ok); }
+tr.fail td:nth-child(2) { color: var(--fail); font-weight: 600; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+button, .button { font: inherit; padding: 6px 12px; border: 1px solid #8888; border-radius: 6px; background: transparent; color: inherit; text-decoration: none; cursor: pointer; }
+pre { white-space: pre-wrap; word-break: break-word; font-size: 0.8rem; background: #8881; padding: 8px; border-radius: 6px; }
+.yes { color: var(--ok); } .no { color: var(--fail); }

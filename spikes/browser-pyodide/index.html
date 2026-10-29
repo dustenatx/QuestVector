@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QV browser spike</title>
+  <link rel="stylesheet" href="spike.css">
+</head>
+<body>
+  <main>
+    <h1>QuestVector browser spike</h1>
+    <p class="note">Local prototype pages. See spikes/browser-pyodide/README.md.</p>
+    <ul>
+      <li><a href="core.html">Core in Pyodide (self-hosted)</a></li>
+      <li><a href="core.html?cdn">Core in Pyodide (Pyodide from jsDelivr, pinned)</a>. Needs <code>serve.py --csp cdn</code>.</li>
+      <li><a href="core.html?probe">Core plus the PyPI dependency probe</a>. Needs <code>serve.py --csp probe</code>.</li>
+      <li><a href="files.html">Files in the browser</a></li>
+    </ul>
+  </main>
+</body>
+</html>
