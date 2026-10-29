@@ -9,20 +9,20 @@ QuestVector is an open-source, local-first career management platform built for 
 
 ## What actually exists right now
 
-This repo describes **two** implementations of the QuestVector concept, but only one of them has been built:
+This repo describes **two** ways to run QuestVector, but only one of them has been built:
 
-| | Python Desktop (this build) | Web Cockpit |
+| | Python Desktop (this build) | Browser app |
 |---|---|---|
-| **Status** | ✅ Implemented and runs today; unit-tested with simulated AI providers, not yet against a live one | 🚧 Design target only — no code exists yet |
-| Stack | Pure Python core + `qv` CLI + pywebview shell | React/Tailwind UI + Rust-compiled Wasm core (planned) |
-| Distribution | Wheel from [GitHub Releases](https://github.com/dustenatx/QuestVector/releases), or clone; `pip install` (Python 3.14) and run locally | Will clone & run locally when built (see [Roadmap](#-roadmap-web-cockpit-not-yet-built) below) |
-| Storage | Local filesystem + AES-256-GCM encrypted vault file | File System Access API + IndexedDB (planned) |
+| **Status** | ✅ Implemented and runs today; unit-tested with simulated AI providers, not yet against a live one | 🚧 Planned — no code exists yet ([ADR-0016](docs/decisions/0016-browser-app-static-pages.md)) |
+| Stack | Pure Python core + `qv` CLI + pywebview shell | The same Python core, running in the browser through Pyodide; static files only |
+| Distribution | Wheel from [GitHub Releases](https://github.com/dustenatx/QuestVector/releases), or clone; `pip install` (Python 3.14) and run locally | This repository's GitHub Pages site, deployed only from the owner's release tags (see [Roadmap](#-roadmap-browser-app-not-yet-built) below) |
+| Storage | Local filesystem + AES-256-GCM encrypted vault file | A folder you choose (Chrome; Edge expected but not yet tested) or the browser's own storage (Safari, Firefox) |
 
-**If you just want to use QuestVector today, skip straight to [Quickstart](#-quickstart) below — it's all Python.** The Web Cockpit section further down is a roadmap, not a tutorial.
+**If you just want to use QuestVector today, skip straight to [Quickstart](#-quickstart) below — it's all Python.** The Browser app section further down is a roadmap, not a tutorial.
 
-**Distribution policy for this project: the only thing published is release files on this repository's [GitHub Releases](https://github.com/dustenatx/QuestVector/releases)** (a wheel, a source archive, and their checksums; [ADR-0014](docs/decisions/0014-github-releases.md)). No public domain, no hosted service, no PyPI or npm-registry package, for either implementation, ever. You download or clone it and run it entirely from local files — a deliberate decision, not a temporary gap.
+**Distribution policy for this project: the only things published are release files on this repository's [GitHub Releases](https://github.com/dustenatx/QuestVector/releases)** (a wheel, a source archive, and their checksums; [ADR-0014](docs/decisions/0014-github-releases.md)) **and, once built, the browser app's static files on this repository's GitHub Pages site** ([ADR-0016](docs/decisions/0016-browser-app-static-pages.md)). The Pages site is static files only: no backend, no accounts, no data collection. No custom domain, no other hosted service, no PyPI or npm-registry package, ever. The desktop build runs entirely from local files — a deliberate decision, not a temporary gap.
 
-The two implementations share the same *concept* — a local career dossier scored against job descriptions via weighted mission templates — but are separate codebases in separate languages. The G-Force matching formula in the Python build is independently defined (documented in `questvector/core/matcher.py`) since the original spec never publishes a scoring algorithm; if the Web Cockpit is ever built, the two engines are not guaranteed to produce identical scores for identical inputs.
+Both run the same Python core, so the same dossier, job description, and template give the same score in either.
 
 ---
 
@@ -143,20 +143,19 @@ qv --version                                    # reads questvector.__version__ 
 
 ---
 
-## 🗺️ Roadmap: Web Cockpit (not yet built)
+## 🗺️ Roadmap: Browser app (not yet built)
 
-**Short answer: yes, it will run locally — the same as the Python build, just not written yet.** Nothing below this line exists as code today; this section documents the *design target* from the original design spec (`MASTER_DEVELOPER_SPEC.pdf`, not included in this repo; the code's "Spec reference" notes cite its section numbers) and the constraint it must be built under. Do not trust any `questvector.dev` URL, `npx questvector`, or `npm install questvector` command as real; none of them exist, and none ever will — see the distribution policy above.
+Nothing in this section exists as code today. It replaces the earlier plan for a React/Rust "Web Cockpit", which won't be built ([ADR-0016](docs/decisions/0016-browser-app-static-pages.md)).
 
-**Planned stack:** React/Tailwind UI + a Rust-compiled Wasm core, using the browser's File System Access API and IndexedDB for local storage — no server component.
+**What's planned:** a version of QuestVector for people who can't install software. It runs the same Python core in the browser through [Pyodide](https://pyodide.org):
 
-**How it will run, once built** (no public domain, no npm package, ever):
-1. Clone this repo.
-2. Install dependencies and build the Wasm/React bundle locally (exact commands land here once the code exists).
-3. Serve the built output from `localhost` (e.g. a one-line local static-file server) and open it in a browser — `localhost` (unlike a plain `file://` page) qualifies as a secure context for the File System Access API.
+- **Static files only.** It's served from this repository's GitHub Pages site, with no backend, no accounts, no data collection, and no third-party scripts.
+- **Your data stays in your browser.** It can work in a folder you choose (Chrome; Edge expected but not yet tested); in Safari and Firefox your files stay in the browser's own storage, and you download backups.
+- **No AI at first.** The first version has no AI narrative.
 
-That's the whole distribution model: clone → build → serve from `localhost`. No hosted URL, no CDN, no registry install, then or ever. A Node-based CLI (a `qv`-equivalent wrapping the same Wasm core) would follow the same rule — run only from a local clone, never via `npx <package>` from the public registry.
+A spike on 28 Oct 2026 showed the core running unchanged in Chrome, Safari and Firefox ([findings](docs/spikes/2026-10-browser-pyodide.md)). The work is planned in [backlog item 16](docs/BACKLOG.md#16-browser-only-app), and the requirements are in [PRD §5.9](docs/PRD.md#59-browser-app). The site's address will be added here once it's live.
 
-Exact build/run commands will be added here once this implementation actually exists.
+Do not trust any `questvector.dev` URL, `npx questvector`, or `npm install questvector` command as real; none of them exist, and none ever will — see the distribution policy above.
 
 ---
 

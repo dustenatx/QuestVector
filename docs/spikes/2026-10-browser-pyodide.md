@@ -1,7 +1,9 @@
 # Spike: QuestVector's Python core in a browser tab via Pyodide
 
 - **Date:** 28 Oct 2026
-- **Status:** Complete. All seven points have findings.
+- **Status:** Go with changes, 28 Oct 2026
+  ([ADR-0016](../decisions/0016-browser-app-static-pages.md); built under
+  backlog item 16). All seven points have findings.
   - Done: the PyPI dependency probe (point 2), the Chrome measurements
     (point 4) and the strict-CSP run (point 5), all run by the owner in
     Chrome 156 on macOS on 28 Oct 2026.

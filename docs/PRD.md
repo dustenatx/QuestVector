@@ -2,12 +2,12 @@
 
 | Field | Value |
 |---|---|
-| Product | QuestVector, Python desktop build (`qv` CLI and desktop app) |
+| Product | QuestVector: the Python desktop build (`qv` CLI and desktop app), and the planned browser app ([ADR-0016](decisions/0016-browser-app-static-pages.md)) |
 | Owner | Dusten Harrison |
-| Version | 0.1 — 15 Oct 2026 (first PRD, written after the 1.0.0 build) |
+| Version | 0.2 — 28 Oct 2026 (adds the browser app); 0.1 — 15 Oct 2026 (first PRD, written after the 1.0.0 build) |
 | Status | Draft for owner review |
 | Build path | AI-directed. Requirements came from a Google Gemini brainstorming session; Claude built 1.0.0 from them. Changes go through a branch and pull request with CI checks; the owner approves every merge. |
-| Cost constraint | $0 beyond the owner's Claude subscription: no paid APIs, no hosting |
+| Cost constraint | $0 beyond the owner's Claude subscription: no paid APIs, no paid hosting (the browser app's static GitHub Pages site is free for a public repository) |
 | Related documents | `docs/QuestVector_Spec.pdf` (how 1.0.0 works), `docs/decisions/` (why), `docs/BACKLOG.md` (planned work), `CHANGELOG.md` (what changed) |
 
 This document states what QuestVector must do and why. The system spec
@@ -30,9 +30,20 @@ resume bundle. Optionally, the user can ask an AI provider of their choice
 to draft a resume summary, including a local model that never leaves the
 machine.
 
-It runs entirely from a local clone. Nothing is hosted, and nothing about the
-user's career data leaves their machine unless they configure a remote AI
-provider and explicitly ask for a narrative.
+It comes in two forms that share one Python core:
+
+- **The desktop app and `qv` CLI** run from a local install (a release wheel
+  or a clone). The dossier is plain Markdown in a local workspace folder.
+- **The browser app** (planned,
+  [ADR-0016](decisions/0016-browser-app-static-pages.md)) is for users who
+  can't install software. It's a set of static files on this repository's
+  GitHub Pages site, running the same core in Pyodide. The dossier stays in
+  the browser, or in a folder the user picks on browsers that allow it.
+  There is no backend, no account, and no data collection.
+
+In both, nothing about the user's career data leaves their machine unless
+they configure a remote AI provider and explicitly ask for a narrative. The
+first browser version has no AI (R28).
 
 ## 2. Goals and non-goals
 
@@ -46,21 +57,25 @@ provider and explicitly ask for a narrative.
 - G4. Keep every generated claim traceable to the dossier: no invented
   titles, metrics, dates, or technology claims.
 - G5. Work at $0: a local model must be a complete alternative to paid APIs.
+  This applies to the desktop app; the browser app has no local model.
 - G6. Be explainable: the user can see why a score is what it is.
 - G7. Let others extend it: new mission templates and new AI providers
   without changes to core code.
+- G8. Be usable by less-technical users with no install and no admin
+  rights: the browser app works in current desktop Chrome, Safari and
+  Firefox, and in Edge (expected but not yet tested) (§5.9). Mobile browsers aren't a goal until they've been tested.
 
 ### Non-goals
 - Hosting, accounts, telemetry, or any public distribution channel other
-  than release files on this repository's GitHub Releases (ADR-0001,
-  narrowed by ADR-0014).
+  than release files on this repository's GitHub Releases and the browser
+  app's static GitHub Pages site (ADR-0001, narrowed by ADR-0014 and
+  ADR-0016). The Pages site serves static files only: no backend and no
+  data collection.
 - Applying to jobs, scraping job boards, or tracking applications.
 - Semantic or embedding-based matching. Keyword matching is a deliberate
   choice for predictability (ADR-0006); revisit only through a new decision.
 - Writing the whole resume with AI. AI drafts the summary only; experience
   content comes from the dossier.
-- The Web Cockpit (React and WebAssembly). It stays a roadmap item and is
-  not covered by this document.
 
 ## 3. Users and use cases
 
@@ -69,6 +84,7 @@ provider and explicitly ask for a narrative.
 | Experienced IT professional (5–10+ years) | Scores a job description before applying, sees gaps, decides whether to apply |
 | Job seeker tailoring an application | Exports a resume bundle matched to one posting, optionally with an AI-drafted summary |
 | Privacy-conscious user | Runs everything with a local model; no data leaves the machine |
+| Less-technical job seeker (no install or admin rights) | Opens the browser app in a desktop browser, keeps the dossier in the browser or a chosen folder, scores job descriptions and exports a resume bundle (G8) |
 | Template contributor | Writes a mission template for their field, validates it locally, and submits a pull request |
 | Owner as developer and learner | Extends the tool through AI-directed development and uses it to learn local LLMs, testing, and CI |
 
@@ -170,7 +186,8 @@ Acceptance criteria use EARS-style phrasing.
 **R11 — Explicit, user-triggered generation.** **Built.**
 - The system SHALL generate a narrative only WHEN the user runs
   `qv export --narrative` or presses "Generate Narrative" in the desktop app.
-- The system SHALL NOT make any other outbound network call.
+- The system SHALL NOT make any other outbound network call. The browser
+  app fetches only its own static files from its own site (R27).
 
 **R12 — Provider choice and extensibility.** **Built.**
 - The system SHALL support Anthropic, OpenAI, Gemini, and Ollama through one
@@ -247,15 +264,75 @@ Acceptance criteria use EARS-style phrasing.
   `CHANGELOG.md` entry, and every significant design choice SHALL get a record
   in `docs/decisions/`.
 
+### 5.9 Browser app
+
+The browser app follows [ADR-0016](decisions/0016-browser-app-static-pages.md)
+and is built under backlog item 16. The figures below come from the
+browser/Pyodide spike
+([`docs/spikes/2026-10-browser-pyodide.md`](spikes/2026-10-browser-pyodide.md)).
+
+**R22 — Core in a Web Worker.** **Planned** (backlog item 16).
+- The browser app SHALL run the unmodified QuestVector Python core in
+  Pyodide, inside a Web Worker, so starting Python and running the core
+  never freeze the page.
+- For the same dossier, job description and template, the browser app SHALL
+  give the same scores as the desktop app (R4).
+
+**R23 — Files and browser storage.** **Planned** (backlog item 16).
+- WHERE the browser supports the File System Access API (Chrome; Edge
+  expected but not yet tested), the app SHALL let the user open a folder and
+  read and write the dossier there.
+- WHERE it doesn't (Safari, Firefox), the app SHALL let the user upload
+  dossier files, keep them in browser-private storage, and download them
+  again.
+- The app SHALL request persistent storage (`navigator.storage.persist()`).
+  It SHALL tell the user plainly when data lives only in the browser, and
+  SHALL prompt them to download a backup.
+- The dossier SHALL stay plain Markdown and SHALL NOT be encrypted in
+  browser storage, as on the desktop (G2).
+
+**R24 — Vault with WebCrypto.** **Planned** (backlog item 16, phase f).
+- The browser app SHALL use WebCrypto for vault key derivation
+  (PBKDF2-HMAC-SHA256) and encryption (AES-256-GCM). It SHALL use the same
+  vault file format as the desktop app (format 2, R17), so one vault file
+  works in both.
+- The browser vault is built when AI arrives in the browser app (R28), since
+  until then it has no keys to hold.
+
+**R25 — Load export libraries on demand.** **Planned** (backlog item 16).
+- The libraries needed only for export (reportlab, python-docx, lxml,
+  Pillow; about 5.4 MB) SHALL load only when the user first exports.
+
+**R26 — Strict Content Security Policy.** **Planned** (backlog item 16).
+- Every page SHALL carry the strict CSP from the spike, plus
+  `worker-src 'self'`, in a `<meta>` tag, because GitHub Pages can't set
+  headers.
+- The CSP SHALL hold with no violations and SHALL NOT allow `'unsafe-eval'`.
+- WHEN the app is loaded inside a frame, THEN it SHALL refuse to render.
+  This is a guardrail, not a control (ADR-0016).
+
+**R27 — Pinned, self-hosted assets.** **Planned** (backlog item 16).
+- Pyodide and every wheel SHALL be served from the app's own site, pinned to
+  exact versions, and checked against known hashes when the site is built.
+- The app SHALL load no third-party scripts and SHALL send no analytics or
+  telemetry.
+
+**R28 — No AI in the first browser version.** **Planned** (backlog item 16,
+phase f).
+- The first browser version SHALL offer no narrative generation.
+- AI comes to the browser app only after live provider testing (backlog
+  item 8), through a browser transport added via the provider registry
+  (R12).
+
 ## 6. Non-functional requirements
 
 | Area | Requirement |
 |---|---|
-| Privacy | No telemetry, accounts, or hosted components. Dossier files stay plain Markdown the user can read and edit without QuestVector. Remote AI calls only on explicit request (R11, R13). |
+| Privacy | No telemetry, accounts, or backend. The only hosted component is the browser app's static Pages site, which collects no data (ADR-0016, R27). Dossier files stay plain Markdown the user can read and edit without QuestVector. Remote AI calls only on explicit request (R11, R13). |
 | Security | Secrets only in the encrypted vault (R16, R17). No secrets in the repository, logs, or bundles. Dependencies audited in CI (R20). |
 | Cost | $0: no paid API is required for any feature; Ollama is a complete alternative (G5). |
 | Accuracy | Generated text is traceable to the dossier (G4, R14). Public descriptions of the project match what has actually been tested. |
-| Portability | Python 3.14 on macOS, Windows, and Linux ([ADR-0013](decisions/0013-python-3-14-uv-lock.md)). The CLI needs no display; the desktop app needs pywebview's platform dependencies. |
+| Portability | Python 3.14 on macOS, Windows, and Linux ([ADR-0013](decisions/0013-python-3-14-uv-lock.md)). The CLI needs no display; the desktop app needs pywebview's platform dependencies. The browser app targets current desktop Chrome, Safari and Firefox, and Edge (expected but not yet tested) (G8); mobile is untested and not a goal yet. |
 | Maintainability | Full type hints; mypy and lint clean; Google-style docstrings on public code; one exception hierarchy with no bare `except:`; standard library first. |
 | Testability | Every module testable without a network, display, or API key. Coverage target to be set under backlog item 4. |
 | Accessibility | Desktop app usable by keyboard with visible focus; color never the only signal of match status. |
@@ -289,6 +366,6 @@ Acceptance criteria use EARS-style phrasing.
 
 ## 9. Out of scope (candidates for later)
 
-The Web Cockpit; cover-letter generation; job-fit reads beyond the G-Force
+Cover-letter generation; job-fit reads beyond the G-Force
 score; semantic matching; importing resumes or LinkedIn profiles into the
 dossier; application tracking; a packaged installer.

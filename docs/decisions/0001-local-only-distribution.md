@@ -1,7 +1,9 @@
 # 0001. Local-only distribution; nothing published externally
 
 - **Status:** Accepted; narrowed by [0014](0014-github-releases.md)
-  (release files on GitHub Releases)
+  (release files on GitHub Releases) and
+  [0016](0016-browser-app-static-pages.md) (the browser app on GitHub Pages,
+  which also supersedes the planned Web Cockpit)
 - **Date:** 2026-09-15
 
 ## Context
