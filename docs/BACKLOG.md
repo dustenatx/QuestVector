@@ -328,11 +328,15 @@ offers comparable features, adapted to a desktop app rather than a website.
 **Design base (29 Oct 2026, [ADR-0017](decisions/0017-bearing-quest-design-base.md)):**
 QuestVector uses the Bearing Quest design system as its shared base (color
 tokens, fonts, logo, accent and data-color rules, contrast test) and keeps
-the Flight Deck instrument-panel motif. Its own accent color is still to be
-chosen.
+the Flight Deck instrument-panel motif. Its accent is Horizon blue
+(`qv-accent`), chosen 29 Oct 2026.
 
 Before any UI code:
 1. Choose QuestVector's accent and contrast-check it in both themes.
+   **Chosen 29 Oct 2026:** Horizon blue, `#1F68A8` light and `#7DB8F0`
+   dark, checked by hand against the tokens (all pass AA; ratios in
+   ADR-0017). The automated contrast test is pending; it comes with the
+   first UI pull request (step 4).
 2. Build a screens mockup from the design system, before the item 16
    phase (c) app shell.
 3. The desktop (pywebview) window and the browser app share one
