@@ -25,7 +25,8 @@ these rather than replacing them.
 ## Decision
 QuestVector's desktop app and browser app (ADR-0016) use the Bearing Quest
 base and keep the Flight Deck instrument-panel motif. QuestVector's own
-accent color is still to be chosen.
+accent is Horizon blue (`qv-accent`), chosen on 29 Oct 2026 over avionics
+teal and afterburner amber.
 
 - **Color tokens, light and dark:**
 
@@ -33,6 +34,7 @@ accent color is still to be chosen.
   |---|---|---|
   | Brand (navy) | `#1B365D` | `#1B365D` |
   | UI accent | `#B4501F` | `#E8894F` |
+  | QuestVector accent (`qv-accent`) | `#1F68A8` | `#7DB8F0` |
   | Text | `#3A3D40` | `#F4F6F8` |
   | Ground | `#F4F6F8` | `#10213A` |
   | Surface | `#FFFFFF` | `#1B365D` |
@@ -54,6 +56,13 @@ accent color is still to be chosen.
   It is never used on match scores or other data. Data gets its own
   lightness-ordered, colorblind-safe scale, with a number or word beside
   every color.
+- **Horizon blue (`qv-accent`)** marks the active tab, the selected
+  template and instrument highlights. Links and the one call to action per
+  screen stay the shared Bearing Quest orange. Checked by hand against the
+  tokens above: `#1F68A8` is 5.83:1 on Surface and 5.38:1 on Ground in the
+  light theme; `#7DB8F0` is 5.76:1 on Surface and 7.68:1 on Ground in the
+  dark theme. All pass WCAG 2.2 AA (4.5:1). The automated contrast test
+  still comes with the first UI pull request.
 - **Logo:** the Bearing Quest SVGs from the design system, not redrawn.
 - **Contrast test:** a test checks the tokens in both themes against WCAG
   2.2 AA, with 3:1 for focus rings and control outlines.
@@ -70,5 +79,3 @@ accent color is still to be chosen.
   with the generated CSS custom properties.
 - **One stylesheet** serves the pywebview window and the browser app.
 - Labels stay themed (decided 29 Oct 2026, backlog item 15).
-- **Still open:** QuestVector's accent color, to be chosen and
-  contrast-checked in both themes before UI code.
