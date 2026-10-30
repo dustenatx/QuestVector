@@ -331,6 +331,8 @@ tokens, fonts, logo, accent and data-color rules, contrast test) and keeps
 the Flight Deck instrument-panel motif. Its accent is Horizon blue
 (`qv-accent`), chosen 29 Oct 2026.
 
+The tokens, logos and screens are in [`docs/design.md`](design.md).
+
 Before any UI code:
 1. Choose QuestVector's accent and contrast-check it in both themes.
    **Chosen 29 Oct 2026:** Horizon blue, `#1F68A8` light and `#7DB8F0`
@@ -338,12 +340,13 @@ Before any UI code:
    ADR-0017). The automated contrast test is pending; it comes with the
    first UI pull request (step 4).
 2. Build a screens mockup from the design system, before the item 16
-   phase (c) app shell.
+   phase (c) app shell. **Done 29 Oct 2026:** the five screens are in
+   `docs/design/mockups/`.
 3. The desktop (pywebview) window and the browser app share one
    stylesheet.
 4. The first UI pull request adds the token contrast test (WCAG 2.2 AA;
    3:1 for focus rings and control outlines) and the CSS custom properties
-   generated from the design system's `tokens.json`.
+   generated from `docs/design/tokens.json`.
 
 **Applies to both apps (28 Oct 2026):** this UI work covers the desktop app
 and the browser app (item 16). Build it once where the two can share the

@@ -1,0 +1,57 @@
+/* QuestVector on the Bearing Quest base: shared tokens plus the QuestVector layer (qv-accent, Flight Deck motif). */
+.qv-light {
+  --ground: #F4F6F8; --surface: #FFFFFF; --text: #3A3D40; --heading: #1B365D; --muted: #5B6B7F;
+  --accent: #B4501F; --accent-hover: #963F17; --on-accent: #FFFFFF;
+  --qv-accent: #1F68A8; --on-qv-accent: #FFFFFF;
+  --primary: #1B365D; --on-primary: #FFFFFF;
+  --control: #7A8594; --border: #D5DBE2; --focus: #1B365D; --error: #B42318; --error-bg: #FDECEA;
+  --caution: #7A4A00; --caution-bg: #FDF3E0; --track: #D5DBE2;
+  color-scheme: light;
+}
+.qv-dark {
+  --ground: #10213A; --surface: #1B365D; --text: #F4F6F8; --heading: #F4F6F8; --muted: #C9D3DF;
+  --accent: #E8894F; --accent-hover: #F0A06B; --on-accent: #10213A;
+  --qv-accent: #7DB8F0; --on-qv-accent: #10213A;
+  --primary: #C9D3DF; --on-primary: #10213A;
+  --control: #8EA0B5; --border: #2E4A72; --focus: #F0A06B; --error: #FF8A80; --error-bg: #3A1F2B;
+  --caution: #F2C46B; --caution-bg: #33291A; --track: #2E4A72;
+  color-scheme: dark;
+}
+.qv-root { min-height: 100%; background: var(--ground); color: var(--text); font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15px; line-height: 22px; }
+.qv-mono { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
+.qv-header { background: var(--surface); border-bottom: 1px solid var(--border); }
+.qv-header-in { max-width: 1200px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; }
+.qv-brand { display: flex; align-items: center; gap: 12px; }
+.qv-brand img { width: 36px; height: 36px; }
+.qv-name { font-weight: 700; font-size: 18px; line-height: 22px; color: var(--heading); letter-spacing: 0.01em; }
+.qv-sub { font-size: 13px; line-height: 18px; color: var(--muted); }
+.qv-tabs { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; flex-wrap: wrap; gap: 4px; }
+.qv-tab { min-height: 44px; padding: 0 14px; display: inline-flex; align-items: center; font: 500 14px/20px "Inter", system-ui, sans-serif; color: var(--muted); background: transparent; border: 0; border-bottom: 3px solid transparent; cursor: pointer; }
+.qv-tab[aria-selected="true"] { color: var(--heading); border-bottom-color: var(--qv-accent); font-weight: 600; }
+.qv-tab:focus-visible, .qv-btn:focus-visible, .qv-input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.qv-main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 20px; }
+.qv-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.qv-panel-h { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.qv-h1 { margin: 0; font-size: 28px; line-height: 34px; font-weight: 600; color: var(--heading); }
+.qv-h2 { margin: 0; font-size: 18px; line-height: 24px; font-weight: 600; color: var(--heading); }
+.qv-label { font: 600 12px/16px "Inter", system-ui, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.qv-hint { margin: 0; font-size: 14px; line-height: 20px; color: var(--muted); }
+.qv-field { display: grid; gap: 4px; min-width: 0; }
+.qv-field-label { font: 600 14px/20px "Inter", system-ui, sans-serif; color: var(--heading); }
+.qv-input { min-height: 40px; box-sizing: border-box; width: 100%; padding: 0 12px; font: 400 15px/22px "Inter", system-ui, sans-serif; color: var(--text); background: var(--surface); border: 1px solid var(--control); border-radius: 2px; }
+textarea.qv-input { padding: 8px 12px; resize: vertical; }
+.qv-btn { min-height: 40px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; font: 600 14px/20px "Inter", system-ui, sans-serif; border-radius: 4px; border: 1px solid transparent; cursor: pointer; }
+.qv-btn-cta { background: var(--accent); color: var(--on-accent); }
+.qv-btn-primary { background: var(--primary); color: var(--on-primary); }
+.qv-btn-secondary { background: var(--surface); color: var(--heading); border-color: var(--control); }
+.qv-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 2px; font: 600 13px/18px "Inter", system-ui, sans-serif; }
+.qv-chip-locked { color: var(--heading); box-shadow: inset 0 0 0 1px var(--heading); }
+.qv-chip-gaps { color: var(--caution); background: var(--caution-bg); box-shadow: inset 0 0 0 1px var(--caution); }
+.qv-chip-critical { color: var(--error); background: var(--error-bg); box-shadow: inset 0 0 0 1px var(--error); }
+.qv-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--control); border-radius: 4px; background: var(--surface); }
+.qv-option-on { border: 2px solid var(--qv-accent); }
+.qv-bar { height: 8px; background: var(--track); border-radius: 2px; overflow: hidden; }
+.qv-bar > span { display: block; height: 100%; background: var(--qv-accent); }
+.qv-ticks { background-image: repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px 10%); height: 6px; }
+.qv-out { margin: 0; padding: 12px; background: var(--ground); border: 1px solid var(--border); border-radius: 4px; font: 400 13px/20px "IBM Plex Mono", ui-monospace, Menlo, monospace; color: var(--text); white-space: pre-wrap; }
+.qv-notice { display: flex; gap: 8px; align-items: flex-start; padding: 10px 14px; border: 1px solid var(--control); border-radius: 4px; background: var(--surface); font-size: 14px; line-height: 20px; color: var(--text); }
