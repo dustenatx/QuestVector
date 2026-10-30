@@ -6,11 +6,15 @@
 ## Context
 On 29 Oct 2026 the owner decided that every GUI app in his projects uses the
 Bearing Quest design system as a shared base, so they share one look. Risk
-Trainer is excluded. Bearing Quest is a project-family name, never a company.
+Trainer joined on 29 Oct 2026 on a light path: it keeps its Blueprint colors
+and shares the fonts and a Bearing Quest top strip. Bearing Quest is a
+project-family name, never a company.
 
 The design system is kept as a claude.ai artifact. It holds the tokens
-(`tokens.json`) and the logo SVGs, and it is the source of truth for both.
-This record states the rules QuestVector takes from it.
+(`tokens.json`) and the logo SVGs. The repo's snapshot in `docs/design/`
+(see `docs/design.md`) is what the code uses; updates from the design system
+come in by pull request. This record states the rules QuestVector takes from
+it.
 
 On 16 Oct 2026 the owner decided to keep QuestVector's "Tactical Ops Flight
 Deck" look and to share conventions with risk-trainer, not its visual design
@@ -41,9 +45,11 @@ teal and afterburner amber.
   | Control outline | `#7A8594` | `#8EA0B5` |
   | Focus | `#1B365D` | `#F0A06B` |
   | Error | `#B42318` | `#FF8A80` |
+  | Caution | `#7A4A00` | `#F2C46B` |
+  | Caution background | `#FDF3E0` | `#33291A` |
 
-  They are generated into CSS custom properties from the design system's
-  `tokens.json`, never pasted into stylesheets as hex.
+  They are generated into CSS custom properties from
+  `docs/design/tokens.json`, never pasted into stylesheets as hex.
 - **Fonts:** Inter for UI and body text, IBM Plex Mono for IDs, figures and
   code, and Cinzel for the wordmark only. All three are under the SIL Open
   Font License 1.1. They are self-hosted from pinned releases, checked
@@ -63,7 +69,13 @@ teal and afterburner amber.
   light theme; `#7DB8F0` is 5.76:1 on Surface and 7.68:1 on Ground in the
   dark theme. All pass WCAG 2.2 AA (4.5:1). The automated contrast test
   still comes with the first UI pull request.
+- **Caution** (decided 29 Oct 2026) is for the "Gaps" match status, shown
+  as `caution` on `caution-bg`. Checked by hand: 6.79:1 (light) and 8.75:1
+  (dark) on caution-bg, 7.48:1 (light) and 7.44:1 (dark) on Surface. Gaps
+  always shows its word and icon, so color is never the only signal.
 - **Logo:** the Bearing Quest SVGs from the design system, not redrawn.
+- **Header** (decided 29 Oct 2026): the Bearing Quest mark sits beside the
+  QuestVector name to show the family. No separate family strip.
 - **Contrast test:** a test checks the tokens in both themes against WCAG
   2.2 AA, with 3:1 for focus rings and control outlines.
 

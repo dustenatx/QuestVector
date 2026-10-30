@@ -7,6 +7,7 @@ Python core. Read these before changing anything:
 - `docs/PRD.md`: requirements, each marked Built or Planned.
 - `docs/decisions/`: why things are built the way they are. Don't reverse a
   decision without a new record that supersedes it.
+- `docs/design.md`: the design base, tokens, logos and screens for any UI work.
 - `docs/DEVELOPMENT.md`: setup, checks, layout, and conventions.
 
 ## Rules
